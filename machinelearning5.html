@@ -1,0 +1,1971 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>XAUUSD GRU Ensemble + Countdown Timer</title>
+<style>
+  :root{--bg:#0a0e14;--panel:#141a22;--panel2:#1c2430;--line:#2a3340;--txt:#e6edf3;
+    --muted:#8b98a5;--gold:#ffd166;--up:#26a69a;--dn:#ef5350;--purple:#a78bfa;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);
+    font-family:"Vazirmatn","Segoe UI",Tahoma,sans-serif;font-size:14px;}
+  header{padding:14px 22px;border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,#141a22,#0a0e14);display:flex;align-items:center;
+    gap:12px;flex-wrap:wrap;}
+  header h1{font-size:16px;margin:0;font-weight:700}
+  header .badge{background:rgba(167,139,250,.15);color:var(--purple);
+    border:1px solid rgba(167,139,250,.4);padding:3px 10px;border-radius:20px;font-size:11px;}
+  main{display:grid;grid-template-columns:380px 1fr;gap:16px;padding:16px;
+    max-width:1700px;margin:0 auto;align-items:start;}
+  @media (max-width:1100px){main{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:14px 16px;margin-bottom:16px;}
+  .panel h2{font-size:13px;margin:0 0 12px;color:var(--gold);font-weight:700;
+    display:flex;align-items:center;gap:8px;}
+  .panel h2::before{content:"";width:4px;height:15px;background:var(--gold);border-radius:2px;}
+  label{display:block;font-size:11px;color:var(--muted);margin:10px 0 4px;}
+  input[type=text],input[type=number],select,textarea{width:100%;background:var(--panel2);
+    border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px 10px;
+    font-family:inherit;font-size:13px;outline:none;}
+  input:focus,select:focus,textarea:focus{border-color:#a78bfa}
+  textarea{min-height:70px;resize:vertical;direction:ltr;text-align:left;
+    font-family:monospace;font-size:11px;}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  button{width:100%;margin-top:12px;padding:11px;border-radius:9px;border:none;
+    cursor:pointer;background:linear-gradient(180deg,#a78bfa,#7c5cf0);color:#fff;
+    font-family:inherit;font-size:14px;font-weight:700;transition:.15s;}
+  button:hover{filter:brightness(1.12)}button:disabled{opacity:.5;cursor:not-allowed}
+  button.ghost{background:var(--panel2);border:1px solid var(--line);color:var(--txt);
+    font-weight:500;padding:8px;}
+  #drop,#dropMT{border:2px dashed var(--line);border-radius:10px;padding:16px;text-align:center;
+    color:var(--muted);font-size:12px;cursor:pointer;transition:.15s;}
+  #drop.hover,#dropMT.hover{border-color:var(--gold);color:var(--gold);background:rgba(255,209,102,.05);}
+  .bar{height:8px;background:var(--panel2);border-radius:6px;overflow:hidden;margin-top:12px;}
+  .bar>div{height:100%;width:0%;background:linear-gradient(90deg,#a78bfa,#ffd166);transition:width .15s;}
+  #log{margin-top:10px;max-height:130px;overflow:auto;font-family:monospace;font-size:11px;
+    direction:ltr;text-align:left;color:var(--muted);line-height:1.6;background:#07090d;
+    border:1px solid var(--line);border-radius:8px;padding:8px;}
+  #log b{color:var(--gold)}#log .ok{color:var(--up)}#log .err{color:var(--dn)}
+  #log .warn{color:var(--gold)}
+  .status-bar{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px 14px;
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;font-size:12px;}
+  .status-bar .dot{width:8px;height:8px;border-radius:50%;background:var(--up);
+    box-shadow:0 0 8px var(--up);flex-shrink:0;}
+  #mStatus{font-weight:700;color:var(--gold)}
+
+  /* ===== COUNTDOWN OVERLAY ===== */
+  .countdown-overlay{
+    position:fixed; top:0; left:0; right:0; bottom:0;
+    background:rgba(7,9,13,.88); backdrop-filter:blur(8px);
+    display:none; align-items:center; justify-content:center;
+    z-index:9999; animation:fadeIn .25s ease-out;
+  }
+  .countdown-overlay.active{display:flex}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+  .countdown-card{
+    background:linear-gradient(135deg,#1a2233,#141a22);
+    border:2px solid rgba(167,139,250,.4);
+    border-radius:24px; padding:36px 48px; text-align:center;
+    box-shadow:0 24px 80px rgba(167,139,250,.28);
+    animation:scaleIn .3s ease-out;
+    min-width:340px;
+  }
+  @keyframes scaleIn{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+
+  .countdown-title{
+    font-size:14px; color:var(--muted); margin-bottom:6px; letter-spacing:1px;
+  }
+  .countdown-subtitle{
+    font-size:11px; color:var(--purple); margin-bottom:20px;
+    font-family:monospace; direction:ltr;
+  }
+
+  .countdown-circle-wrapper{
+    position:relative; width:200px; height:200px; margin:0 auto 20px;
+  }
+  .countdown-circle-wrapper svg{
+    width:100%; height:100%; transform:rotate(-90deg);
+  }
+  .countdown-bg-circle{
+    fill:none; stroke:rgba(255,255,255,.08); stroke-width:10;
+  }
+  .countdown-fg-circle{
+    fill:none; stroke:url(#gradCountdown);
+    stroke-width:10; stroke-linecap:round;
+    transition:stroke-dashoffset .95s linear;
+    filter:drop-shadow(0 0 12px rgba(167,139,250,.6));
+  }
+  .countdown-number{
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    font-size:64px; font-weight:900; font-family:monospace;
+    background:linear-gradient(135deg,#a78bfa,#ffd166);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    line-height:1; letter-spacing:-2px;
+    filter:drop-shadow(0 0 20px rgba(167,139,250,.4));
+    animation:pulseNumber 1s ease-in-out infinite;
+  }
+  @keyframes pulseNumber{
+    0%,100%{transform:translate(-50%,-50%) scale(1)}
+    50%{transform:translate(-50%,-50%) scale(1.06)}
+  }
+  .countdown-unit{
+    font-size:12px; color:var(--muted); margin-top:4px;
+  }
+
+  .countdown-tips{
+    margin-top:16px; padding:12px 16px; background:rgba(255,255,255,.03);
+    border-radius:10px; border-right:3px solid var(--gold);
+    font-size:11px; color:var(--muted); line-height:1.9;
+    text-align:right; max-width:340px; margin-left:auto; margin-right:auto;
+  }
+  .countdown-tips b{color:var(--gold)}
+
+  .countdown-progress-bar{
+    width:100%; height:4px; background:rgba(255,255,255,.06);
+    border-radius:4px; overflow:hidden; margin-top:16px;
+  }
+  .countdown-progress-bar > div{
+    height:100%; background:linear-gradient(90deg,#a78bfa,#ffd166);
+    width:0%; transition:width 1s linear;
+  }
+
+  .skip-btn{
+    margin-top:16px; padding:9px 22px; border-radius:20px; border:1px solid var(--line);
+    background:transparent; color:var(--txt); font-family:inherit; font-size:12px;
+    cursor:pointer; transition:.15s; width:auto;
+  }
+  .skip-btn:hover{border-color:var(--gold); color:var(--gold); background:rgba(255,209,102,.05)}
+
+  /* ===== SIGNAL BOX ===== */
+  .signal-box{display:grid;grid-template-columns:260px 1fr;gap:0;border-radius:16px;
+    overflow:hidden;margin-bottom:14px;border:2px solid var(--line);
+    background:linear-gradient(135deg,#1a2233,#141a22);
+    box-shadow:0 8px 32px rgba(0,0,0,.35);transition:all .3s;}
+  @media (max-width:820px){.signal-box{grid-template-columns:1fr}}
+  .signal-box.buy{border-color:var(--up);box-shadow:0 8px 32px rgba(38,166,154,.25)}
+  .signal-box.sell{border-color:var(--dn);box-shadow:0 8px 32px rgba(239,83,80,.25)}
+  .signal-box.wait{border-color:var(--gold)}
+  .signal-side{display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:22px 20px;gap:8px;background:rgba(0,0,0,.25);border-left:1px solid var(--line);}
+  .signal-box.buy .signal-side{background:linear-gradient(135deg,rgba(38,166,154,.15),rgba(38,166,154,.05))}
+  .signal-box.sell .signal-side{background:linear-gradient(135deg,rgba(239,83,80,.15),rgba(239,83,80,.05))}
+  .signal-box.wait .signal-side{background:linear-gradient(135deg,rgba(255,209,102,.12),rgba(255,209,102,.04))}
+  .signal-action{font-size:42px;font-weight:900;letter-spacing:3px;
+    font-family:"Segoe UI",sans-serif;direction:ltr;line-height:1;padding:4px 0;}
+  .signal-box.buy .signal-action{color:var(--up);text-shadow:0 0 24px rgba(38,166,154,.55)}
+  .signal-box.sell .signal-action{color:var(--dn);text-shadow:0 0 24px rgba(239,83,80,.55)}
+  .signal-box.wait .signal-action{color:var(--gold);text-shadow:0 0 24px rgba(255,209,102,.55)}
+  .signal-emoji{font-size:26px;line-height:1}
+  .signal-conf-lbl{font-size:11px;color:var(--muted);margin-top:4px}
+  .signal-conf{font-size:20px;font-weight:800;font-family:monospace;direction:ltr}
+  .signal-box.buy .signal-conf{color:var(--up)}
+  .signal-box.sell .signal-conf{color:var(--dn)}
+  .signal-box.wait .signal-conf{color:var(--gold)}
+  .signal-details{padding:18px 22px;display:grid;grid-template-columns:1fr 1fr;gap:10px 20px;}
+  @media (max-width:600px){.signal-details{grid-template-columns:1fr}}
+  .sd-row{display:flex;justify-content:space-between;align-items:center;
+    padding:9px 14px;background:var(--panel2);border-radius:9px;border:1px solid var(--line);}
+  .sd-row .sd-k{font-size:12px;color:var(--muted)}
+  .sd-row .sd-v{font-size:16px;font-weight:800;font-family:monospace;direction:ltr}
+  .sd-v.up{color:var(--up)}.sd-v.dn{color:var(--dn)}
+  .sd-v.gold{color:var(--gold)}.sd-v.purple{color:var(--purple)}
+  .sd-row.full{grid-column:1/-1}
+  .sd-sub{font-size:10px;color:var(--muted);font-weight:400;font-family:inherit;
+    margin-right:6px;direction:rtl}
+  .signal-reason{grid-column:1/-1;font-size:12px;line-height:1.9;color:var(--muted);
+    padding:10px 14px;background:rgba(255,255,255,.02);border-radius:9px;
+    border-right:3px solid var(--gold);}
+  .signal-reason b{color:var(--txt)}
+  .opt-tag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;
+    background:linear-gradient(135deg,rgba(38,166,154,.25),rgba(38,166,154,.1));
+    color:var(--up);border:1px solid rgba(38,166,154,.4);margin-left:6px;
+    font-family:monospace;direction:ltr;}
+
+  .bt-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+    gap:10px;margin-bottom:12px;}
+  .bt-card{background:var(--panel2);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;text-align:center;}
+  .bt-card .k{font-size:10px;color:var(--muted);margin-bottom:5px}
+  .bt-card .v{font-size:18px;font-weight:800;font-family:monospace;direction:ltr}
+  .bt-card .v.up{color:var(--up)}.bt-card .v.dn{color:var(--dn)}
+  .bt-card .v.gold{color:var(--gold)}.bt-card .v.purple{color:var(--purple)}
+  .best-params{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+  .bp-item{background:linear-gradient(135deg,rgba(38,166,154,.15),rgba(38,166,154,.03));
+    border:1px solid rgba(38,166,154,.35);border-radius:10px;padding:12px;text-align:center;}
+  .bp-item .k{font-size:10px;color:var(--muted);margin-bottom:6px}
+  .bp-item .v{font-size:22px;font-weight:800;font-family:monospace;direction:ltr;color:var(--up)}
+  .mini-table{width:100%;border-collapse:collapse;font-size:11px;margin-top:8px;}
+  .mini-table th,.mini-table td{padding:6px 4px;border-bottom:1px solid var(--line);
+    text-align:center;font-family:monospace;direction:ltr;}
+  .mini-table th{color:var(--muted);font-size:10px;font-family:inherit;font-weight:600}
+  .mini-table tr.best{background:rgba(38,166,154,.10)}
+  .mini-table .pos{color:var(--up)}
+  .mini-table .neg{color:var(--dn)}
+
+  .hero{background:linear-gradient(135deg,#1a2233,#141a22);border:1px solid var(--line);
+    border-radius:14px;padding:18px 22px;margin-bottom:14px;display:grid;
+    grid-template-columns:1fr 1.2fr 1fr;gap:16px;align-items:center;}
+  @media (max-width:700px){.hero{grid-template-columns:1fr}}
+  .hero .main{text-align:center;padding:0 10px;}
+  .hero .main .lbl{font-size:11px;color:var(--muted);margin-bottom:6px;letter-spacing:1px;}
+  .hero .main .num{font-size:44px;font-weight:800;font-family:monospace;direction:ltr;
+    background:linear-gradient(135deg,#a78bfa,#ffd166);-webkit-background-clip:text;
+    background-clip:text;color:transparent;line-height:1;}
+  .hero .main .unit{font-size:12px;color:var(--muted);margin-top:8px;}
+  .hero .sub{text-align:center;padding:0 8px;border-left:1px solid var(--line);}
+  .hero .sub:first-child{border-left:none}
+  @media (max-width:700px){.hero .sub{border-left:none;border-top:1px solid var(--line);padding-top:12px}}
+  .hero .sub .k{font-size:11px;color:var(--muted);margin-bottom:6px}
+  .hero .sub .v{font-size:20px;font-weight:700;font-family:monospace;direction:ltr;text-align:center}
+  .hero .sub .v.gold{color:var(--gold)}.hero .sub .v.up{color:var(--up)}
+  .hero .sub .v.purple{color:var(--purple)}.hero .sub .v.dn{color:var(--dn)}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:12px;}
+  .card{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;}
+  .card .k{font-size:10px;color:var(--muted);margin-bottom:5px}
+  .card .v{font-size:14px;font-weight:700;font-family:monospace;direction:ltr;text-align:left}
+  .card .v.gold{color:var(--gold)}.card .v.up{color:var(--up)}.card .v.purple{color:var(--purple)}
+  canvas{width:100%;display:block;border-radius:10px;background:#07090d;border:1px solid var(--line);}
+  table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px;}
+  th,td{padding:9px 6px;text-align:center;border-bottom:1px solid var(--line);
+    font-family:monospace;direction:ltr;}
+  th{color:var(--muted);font-weight:600;font-size:10px;font-family:inherit;letter-spacing:.5px;}
+  tbody tr:hover{background:rgba(255,255,255,.03)}
+  .tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-family:inherit;}
+  .tag.up{background:rgba(38,166,154,.15);color:var(--up)}
+  .tag.dn{background:rgba(239,83,80,.15);color:var(--dn)}
+  .hint{font-size:11px;color:var(--muted);line-height:1.8;margin-top:12px;padding:10px 12px;
+    background:var(--panel2);border-radius:8px;border-right:3px solid var(--gold);}
+  .hidden{display:none}
+  .legend{display:flex;gap:16px;font-size:11px;color:var(--muted);margin-bottom:8px;flex-wrap:wrap;}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-left:5px;vertical-align:middle;}
+  .pill{display:inline-block;font-size:10px;padding:2px 7px;border-radius:20px;
+    background:rgba(167,139,250,.15);color:var(--purple);margin-right:6px;}
+  .toggle-row{display:flex;align-items:center;gap:8px;padding:8px 0;font-size:12px;}
+  .toggle-row input[type=checkbox]{width:auto;margin:0;cursor:pointer;accent-color:#a78bfa;}
+  .toggle-row label{margin:0;cursor:pointer;color:var(--txt);font-size:12px;}
+</style>
+</head>
+<body>
+
+<!-- ==================== COUNTDOWN OVERLAY ==================== -->
+<div class="countdown-overlay" id="countdownOverlay">
+  <div class="countdown-card">
+    <div class="countdown-title">آماده‌سازی برای تحلیل</div>
+    <div class="countdown-subtitle">MODEL TRAINING STARTS IN...</div>
+
+    <div class="countdown-circle-wrapper">
+      <svg viewBox="0 0 200 200">
+        <defs>
+          <linearGradient id="gradCountdown" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#a78bfa"/>
+            <stop offset="100%" stop-color="#ffd166"/>
+          </linearGradient>
+        </defs>
+        <circle class="countdown-bg-circle" cx="100" cy="100" r="88"/>
+        <circle class="countdown-fg-circle" id="countdownFgCircle"
+                cx="100" cy="100" r="88"
+                stroke-dasharray="552.92" stroke-dashoffset="0"/>
+      </svg>
+      <div class="countdown-number" id="countdownNumber">10</div>
+    </div>
+    <div class="countdown-unit">ثانیه تا شروع</div>
+
+    <div class="countdown-progress-bar">
+      <div id="countdownProgressBar"></div>
+    </div>
+
+    <div class="countdown-tips" id="countdownTips">
+      <b>💡 نکته:</b> در این مدت می‌توانید فایل CSV خود را چک کنید و از صحت داده‌ها مطمئن شوید.
+    </div>
+
+    <button class="skip-btn" id="skipCountdown">⏭ رد کردن و شروع فوری</button>
+  </div>
+</div>
+<!-- ==================== /COUNTDOWN OVERLAY ==================== -->
+
+<header>
+  <h1>XAUUSD GRU Ensemble — با شمارش معکوس</h1>
+  <span class="badge">Countdown + Grid Search</span>
+  <span class="badge" style="background:rgba(255,209,102,.12);color:var(--gold);border-color:rgba(255,209,102,.35)">Max Net R</span>
+</header>
+
+<main>
+  <div>
+    <div class="panel">
+      <h2>۱) داده ورودی</h2>
+      <div id="drop">فایل CSV را اینجا رها کنید یا کلیک کنید<br>
+        <span style="font-size:10px">date, open, high, low, close, volume</span></div>
+      <input type="file" id="file" accept=".csv,.txt" class="hidden">
+      <label>یا متن CSV را بچسبانید</label>
+      <textarea id="raw"></textarea>
+      <button class="ghost" id="useText">استفاده از متن بالا</button>
+      <div id="dataInfo" style="font-size:11px;color:var(--muted);margin-top:8px"></div>
+    </div>
+
+    <div class="panel">
+      <h2>۱.۵) داده MT5 / Ayar_D_FUN <span class="pill">جداگانه</span></h2>
+      <div id="dropMT">
+        فایل Ayar_D_FUN را اینجا رها کنید یا کلیک کنید<br>
+        <span style="font-size:10px;direction:ltr">&lt;Ticker&gt;,&lt;Per&gt;,&lt;DTYYYYMMDD&gt;,&lt;TIME&gt;,O,H,L,C,Vol,...</span>
+      </div>
+      <input type="file" id="fileMT" accept=".csv,.txt" class="hidden">
+      <label>یا متن MT5 را بچسبانید</label>
+      <textarea id="rawMT"></textarea>
+      <button class="ghost" id="useTextMT">استفاده از متن MT5</button>
+      <div id="dataInfoMT" style="font-size:11px;color:var(--muted);margin-top:8px"></div>
+      <div class="hint" style="margin-top:10px;font-size:10px">
+        💡 ستون‌ها: Ticker · Per · Date(YYYYMMDD) · Time(HHMMSS) · Open · High · Low · Close · Vol
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>۲) تنظیمات مدل</h2>
+      <div class="row">
+        <div><label>پنجره ورودی</label><input type="number" id="cfgWin" value="24" min="8" max="48"></div>
+        <div><label>دوره‌ها (Epochs)</label><input type="number" id="cfgEpochs" value="15" min="5" max="200"></div>
+      </div>
+      <div class="row">
+        <div><label>حجم مخفی GRU</label><input type="number" id="cfgHidden" value="40" min="8" max="96"></div>
+        <div><label>Ensemble</label><input type="number" id="cfgEns" value="3" min="1" max="5"></div>
+      </div>
+      <div class="row">
+        <div><label>نرخ یادگیری</label><input type="number" id="cfgLr" value="0.004" step="0.001" min="0.0001" max="0.05"></div>
+        <div><label>Batch</label><input type="number" id="cfgBatch" value="32" min="8" max="256"></div>
+      </div>
+      <div class="row">
+        <div><label>وزن Loss جهت‌دار</label><input type="number" id="cfgClsW" value="2.0" step="0.5" min="0" max="10"></div>
+        <div><label>آستانه High-Conf</label><input type="number" id="cfgConfT" value="0.10" step="0.02" min="0.02" max="0.30"></div>
+      </div>
+
+      <!-- ★★★ فیلد جدید: حداکثر کندل‌ها ★★★ -->
+      <div class="row" style="background:rgba(255,209,102,.06);border:1px solid rgba(255,209,102,.25);border-radius:8px;padding:8px;margin-top:8px">
+        <div>
+          <label style="color:var(--gold)">✂️ حداکثر کندل‌های آخر (آموزش)</label>
+          <input type="number" id="cfgMaxCandles" value="3000" min="300" max="100000" step="500">
+        </div>
+        <div style="display:flex;align-items:flex-end;padding-bottom:4px">
+          <div style="font-size:10px;color:var(--muted);line-height:1.6">
+            برای جلوگیری از OOM مرورگر، فقط آخرین N کندل پردازش می‌شود.<br>
+            <b style="color:var(--gold)">پیشنهاد: 2000 تا 5000</b>
+          </div>
+        </div>
+      </div>
+
+      <h2 style="margin-top:16px">۳) شمارش معکوس</h2>
+      <div class="row">
+        <div><label>زمان انتظار (ثانیه)</label><input type="number" id="cfgWait" value="10" min="1" max="60"></div>
+        <div><label>فعال باشد؟</label>
+          <select id="cfgWaitEnabled">
+            <option value="1">✅ بله</option>
+            <option value="0">❌ خیر</option>
+          </select>
+        </div>
+      </div>
+
+      <h2 style="margin-top:16px">۴) مدیریت ریسک و بهینه‌سازی</h2>
+      <div class="toggle-row">
+        <input type="checkbox" id="cfgOptimize" checked>
+        <label for="cfgOptimize">🔍 بهینه‌سازی TP/SL با Backtest</label>
+      </div>
+      <div class="row">
+        <div><label>سرمایه کل ($)</label><input type="number" id="cfgCapital" value="10000" min="100" max="1000000" step="100"></div>
+        <div><label>ریسک هر معامله (٪)</label><input type="number" id="cfgRiskPct" value="1.0" step="0.1" min="0.1" max="5"></div>
+      </div>
+      <div class="row">
+        <div><label>ارزش هر پیپ ($)</label><input type="number" id="cfgPipVal" value="1" step="0.1" min="0.01" max="100"></div>
+        <div><label>حداقل معاملات Backtest</label><input type="number" id="cfgMinTrades" value="15" min="5" max="100"></div>
+      </div>
+      <div class="row">
+        <div><label>SL پایه (اگر optimization خاموش)</label><input type="number" id="cfgSlMult" value="1.5" step="0.1" min="0.5" max="4"></div>
+        <div><label>R:R پایه</label><input type="number" id="cfgRR" value="2.0" step="0.1" min="1" max="5"></div>
+      </div>
+      <div class="row">
+        <div><label>حداقل اطمینان سیگنال (٪)</label><input type="number" id="cfgMinConf" value="20" min="0" max="80"></div>
+        <div><label>افق شبیه‌سازی (کندل)</label><input type="number" id="cfgHorizon" value="15" min="5" max="50"></div>
+      </div>
+
+      <label>حالت خروجی</label>
+      <select id="cfgMode">
+        <option value="close">فقط Close ۵ کندل (پیشنهادی)</option>
+        <option value="ohlc">OHLC کامل ۵ کندل</option>
+      </select>
+      <button id="run">🚀 شروع تحلیل (با شمارش معکوس)</button>
+      <div class="bar"><div id="barFill"></div></div>
+      <div id="log"></div>
+    </div>
+  </div>
+
+  <div>
+    <div class="status-bar"><div class="dot"></div>
+      <span style="color:var(--muted);font-size:11px">وضعیت:</span>
+      <span id="mStatus">آماده</span>
+    </div>
+
+    <div class="signal-box wait" id="signalBox">
+      <div class="signal-side">
+        <div class="signal-emoji" id="sigEmoji">⏳</div>
+        <div class="signal-action" id="sigAction">WAIT</div>
+        <div class="signal-conf-lbl">اطمینان سیگنال</div>
+        <div class="signal-conf" id="sigConf">—</div>
+      </div>
+      <div class="signal-details">
+        <div class="sd-row">
+          <span class="sd-k">ورود (Entry)</span>
+          <span class="sd-v gold" id="sigEntry">—</span>
+        </div>
+        <div class="sd-row">
+          <span class="sd-k">حد ضرر (SL)</span>
+          <span class="sd-v dn" id="sigSL">—</span>
+        </div>
+        <div class="sd-row">
+          <span class="sd-k">حد سود (TP)</span>
+          <span class="sd-v up" id="sigTP">—</span>
+        </div>
+        <div class="sd-row">
+          <span class="sd-k">نسبت R:R</span>
+          <span class="sd-v purple" id="sigRR">—</span>
+        </div>
+        <div class="sd-row full">
+          <span class="sd-k">حجم پیشنهادی</span>
+          <span class="sd-v gold" id="sigSize">—</span>
+        </div>
+        <div class="signal-reason" id="sigReason">
+          هنوز سیگنالی صادر نشده است.
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="optPanel" style="display:none">
+      <h2>🎯 پارامترهای بهینه‌شده <span class="pill">Grid Search</span></h2>
+      <div class="best-params">
+        <div class="bp-item"><div class="k">ضریب ATR برای SL</div><div class="v" id="optSL">—</div></div>
+        <div class="bp-item"><div class="k">نسبت R:R</div><div class="v" id="optRR">—</div></div>
+        <div class="bp-item"><div class="k">حداقل اطمینان (٪)</div><div class="v" id="optConf">—</div></div>
+      </div>
+      <h2 style="margin-top:12px">📊 نتایج Backtest</h2>
+      <div class="bt-grid">
+        <div class="bt-card"><div class="k">سود خالص (Net R)</div><div class="v up" id="btNetR">—</div></div>
+        <div class="bt-card"><div class="k">نرخ برد</div><div class="v up" id="btWR">—</div></div>
+        <div class="bt-card"><div class="k">Profit Factor</div><div class="v purple" id="btPF">—</div></div>
+        <div class="bt-card"><div class="k">حداکثر افت (R)</div><div class="v dn" id="btDD">—</div></div>
+        <div class="bt-card"><div class="k">تعداد معاملات</div><div class="v gold" id="btN">—</div></div>
+        <div class="bt-card"><div class="k">Expectancy (R)</div><div class="v" id="btExp">—</div></div>
+        <div class="bt-card"><div class="k">سود خالص ($)</div><div class="v up" id="btUSD">—</div></div>
+      </div>
+      <h2 style="margin-top:18px">📈 منحنی سرمایه</h2>
+      <canvas id="equityChart" height="180"></canvas>
+      <h2 style="margin-top:18px">🏆 ۵ ترکیب برتر</h2>
+      <table class="mini-table">
+        <thead><tr>
+          <th>رتبه</th><th>SL×ATR</th><th>R:R</th><th>MinConf</th>
+          <th>Net R</th><th>تعداد</th><th>WR</th><th>PF</th>
+        </tr></thead>
+        <tbody id="topCombos"></tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <h2>متریک‌های مدل</h2>
+      <div class="hero">
+        <div class="sub">
+          <div class="k">دقت High-Conf</div>
+          <div class="v purple" id="mHiAcc">—</div>
+          <div class="k" style="margin-top:6px" id="mHiCov">—</div>
+        </div>
+        <div class="main">
+          <div class="lbl">دقت جهت‌دار</div>
+          <div class="num" id="mDir1">—</div>
+          <div class="unit">Directional Accuracy</div>
+        </div>
+        <div class="sub">
+          <div class="k">R² Score</div>
+          <div class="v gold" id="mR2">—</div>
+          <div class="k" style="margin-top:6px">MAE1: <span id="mMae1v" style="color:var(--gold);font-family:monospace">—</span></div>
+        </div>
+      </div>
+      <div class="cards">
+        <div class="card"><div class="k">Classifier (کندل ۱)</div><div class="v purple" id="mCls1">—</div></div>
+        <div class="card"><div class="k">High-Conf Accuracy</div><div class="v purple" id="mClsHC">—</div></div>
+        <div class="card"><div class="k">Regression Direction</div><div class="v" id="mRegDir">—</div></div>
+        <div class="card"><div class="k">MAE کندل ۱ ($)</div><div class="v gold" id="mMae1">—</div></div>
+        <div class="card"><div class="k">MAE کندل ۵ ($)</div><div class="v gold" id="mMae5">—</div></div>
+        <div class="card"><div class="k">MAPE کندل ۱</div><div class="v" id="mMape1">—</div></div>
+        <div class="card"><div class="k">نمونه‌های Val</div><div class="v" id="mVal">—</div></div>
+      </div>
+      <h2 style="margin-top:18px">نمودار</h2>
+      <div class="legend">
+        <span><i style="background:#26a69a"></i>صعودی</span>
+        <span><i style="background:#ef5350"></i>نزولی</span>
+        <span><i style="background:#ffd166"></i>پیش‌بینی</span>
+        <span><i style="background:#a78bfa"></i>بازه اطمینان</span>
+        <span><i style="background:#ef5350;border:1px dashed #fff"></i>SL</span>
+        <span><i style="background:#26a69a;border:1px dashed #fff"></i>TP</span>
+      </div>
+      <canvas id="chart" height="380"></canvas>
+      <h2 style="margin-top:18px">۵ کندل پیش‌بینی‌شده</h2>
+      <table>
+        <thead><tr>
+          <th>#</th><th>زمان</th><th>Open</th><th>High</th><th>Low</th><th>Close</th>
+          <th>تغییر</th><th>P(Up)</th><th>اطمینان (±)</th>
+        </tr></thead>
+        <tbody id="tbody"><tr><td colspan="9" style="color:var(--muted);font-family:inherit">هنوز پیش‌بینی انجام نشده</td></tr></tbody>
+      </table>
+      <div class="hint" id="summaryBox">
+        ⚠️ ابزار آموزشی — قبل از استفاده واقعی، حتماً روی دمو تست کنید.
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const logBox = $('log');
+function log(msg, cls){
+  const line = document.createElement('div');
+  if (cls) line.className = cls;
+  line.innerHTML = msg;
+  logBox.appendChild(line);
+  logBox.scrollTop = logBox.scrollHeight;
+}
+function clearLog(){ logBox.innerHTML = ''; }
+
+/* ============================================================
+   ★★★  COUNTDOWN TIMER  ★★★
+   ============================================================ */
+let countdownCancelled = false;
+
+async function runCountdown(seconds, tips){
+  countdownCancelled = false;
+  const overlay = $('countdownOverlay');
+  const numberEl = $('countdownNumber');
+  const circle = $('countdownFgCircle');
+  const progressBar = $('countdownProgressBar');
+  const tipsEl = $('countdownTips');
+  const skipBtn = $('skipCountdown');
+
+  const radius = 88;
+  const circumference = 2 * Math.PI * radius;
+
+  overlay.classList.add('active');
+  numberEl.textContent = seconds;
+  circle.style.strokeDashoffset = '0';
+  circle.style.transition = 'none';
+  progressBar.style.width = '0%';
+  progressBar.style.transition = 'none';
+  tipsEl.innerHTML = tips || 'در این مدت می‌توانید آخرین تنظیمات را مرور کنید.';
+
+  void circle.offsetWidth;
+  void progressBar.offsetWidth;
+
+  circle.style.transition = `stroke-dashoffset ${seconds}s linear`;
+  progressBar.style.transition = `width ${seconds}s linear`;
+  void circle.offsetWidth;
+  void progressBar.offsetWidth;
+  circle.style.strokeDashoffset = circumference;
+  progressBar.style.width = '100%';
+
+  const skipHandler = () => { countdownCancelled = true; };
+  skipBtn.addEventListener('click', skipHandler);
+
+  const allTips = [
+    '💡 <b>نکته:</b> مدل GRU برای شبیه‌سازی سری‌های زمانی ساخته شده — پنجره ورودی را جدی بگیرید.',
+    '📊 <b>یادآوری:</b> آستانه High-Conf را بالاتر بگذارید تا سیگنال‌های دقیق‌تر بگیرید.',
+    '⚙️ <b>پیشنهاد:</b> برای بهترین نتیجه، Ensemble را روی ۳ بگذارید.',
+    '🎯 <b>استراتژی:</b> بهینه‌سازی Grid Search به دنبال بیشترین Net R است.',
+    '⏳ <b>صبر:</b> اگر مدل WAIT داد، معامله نکنید — این بخشی از استراتژی است.',
+    '🛡️ <b>ریسک:</b> هرگز بیش از ۲٪ سرمایه را در یک معامله ریسک نکنید.',
+    '📈 <b>روند:</b> دقت جهت بالای ۵۵٪ روی داده H1 نتیجه‌ی خوبی است.',
+    '🔬 <b>داده:</b> برای آموزش بهتر، حداقل ۱۰۰۰ کندل توصیه می‌شود.',
+    '💎 <b>طلا:</b> XAUUSD به اخبار اقتصادی حساس است — مدل آن‌ها را نمی‌بیند.',
+    '🧠 <b>هوش:</b> Ensemble از چند مدل مستقل میانگین می‌گیرد و پایدارتر است.'
+  ];
+
+  const tipInterval = setInterval(() => {
+    if (countdownCancelled) return;
+    const t = allTips[Math.floor(Math.random() * allTips.length)];
+    tipsEl.innerHTML = t;
+  }, 2500);
+
+  for (let i = seconds; i >= 1; i--){
+    if (countdownCancelled) break;
+    numberEl.textContent = i;
+    await sleep(1000);
+  }
+
+  clearInterval(tipInterval);
+  skipBtn.removeEventListener('click', skipHandler);
+
+  numberEl.textContent = '0';
+  numberEl.style.animation = 'none';
+  await sleep(200);
+
+  overlay.classList.remove('active');
+  numberEl.style.animation = '';
+  return !countdownCancelled;
+}
+
+/* ===== CSV ===== */
+function parseDateStr(s){
+  const m = s.match(/(\d{4})[.\-\/](\d{1,2})[.\-\/](\d{1,2})[ T](\d{1,2}):(\d{2})/);
+  if (m) return new Date(+m[1], +m[2]-1, +m[3], +m[4], +m[5]);
+  const d = new Date(s); return isNaN(d.getTime()) ? null : d;
+}
+function parseCSV(text){
+  if (isMTFormat(text)) return parseMTFormat(text);
+
+  const rows = [];
+  for (const raw of text.split(/\r?\n/)){
+    const line = raw.trim(); if (!line) continue;
+    const p = line.split(/[,;\t]+/); if (p.length < 5) continue;
+    const o=parseFloat(p[1]), h=parseFloat(p[2]), l=parseFloat(p[3]), c=parseFloat(p[4]);
+    if (![o,h,l,c].every(isFinite)) continue;
+    const v = p[5]!==undefined ? parseFloat(p[5]) : 0;
+    rows.push({t:p[0].trim(), dt:parseDateStr(p[0].trim()), o,h,l,c, v:isFinite(v)?v:0});
+  }
+  rows.sort((a,b)=>(a.dt?a.dt.getTime():0)-(b.dt?b.dt.getTime():0));
+  return rows;
+}
+
+/* ===== MT5 / Ayar_D_FUN format ===== */
+function isMTFormat(text){
+  const lines = text.split(/\r?\n/).filter(l => l.trim()).slice(0, 5);
+  for (const line of lines){
+    const t = line.trim();
+    if (t.startsWith('<')) return true;
+    const p = t.split(/[,\t]+/);
+    if (p.length >= 8){
+      const d = (p[2] || '').trim().replace(/^["']|["']$/g,'');
+      const tm = (p[3] || '').trim().replace(/^["']|["']$/g,'');
+      if (/^\d{8}$/.test(d) && /^\d{6}$/.test(tm)) return true;
+    }
+  }
+  return false;
+}
+
+function parseMTFormat(text){
+  const rows = [];
+  for (const raw of text.split(/\r?\n/)){
+    const line = raw.trim();
+    if (!line) continue;
+    if (line.startsWith('<')) continue;
+    const p = line.split(/[,\t]+/).map(s => s.trim().replace(/^["']|["']$/g,''));
+    if (p.length < 8) continue;
+    const ds = p[2], ts = p[3];
+    if (!/^\d{8}$/.test(ds)) continue;
+    const y  = +ds.slice(0,4);
+    const mo = +ds.slice(4,6);
+    const d  = +ds.slice(6,8);
+    const hh = /^\d{6}$/.test(ts) ? +ts.slice(0,2) : 0;
+    const mi = /^\d{6}$/.test(ts) ? +ts.slice(2,4) : 0;
+    const dt = new Date(y, mo-1, d, hh, mi);
+    const o = parseFloat(p[4]);
+    const h = parseFloat(p[5]);
+    const l = parseFloat(p[6]);
+    const c = parseFloat(p[7]);
+    if (![o,h,l,c].every(isFinite)) continue;
+    const v = p[8] !== undefined ? parseFloat(p[8]) : 0;
+    rows.push({
+      t : `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')} `
+          + `${String(hh).padStart(2,'0')}:${String(mi).padStart(2,'0')}`,
+      dt, o, h, l, c, v: isFinite(v) ? v : 0
+    });
+  }
+  rows.sort((a,b) => (a.dt ? a.dt.getTime() : 0) - (b.dt ? b.dt.getTime() : 0));
+  return rows;
+}
+
+/* ===== Indicators ===== */
+function rollMean(a, p){
+  const n=a.length, out=new Float64Array(n).fill(NaN); let s=0;
+  for (let i=0;i<n;i++){ s+=a[i]; if (i>=p) s-=a[i-p]; if (i>=p-1) out[i]=s/p; }
+  return out;
+}
+function rollStd(a, p){
+  const n=a.length, out=new Float64Array(n).fill(NaN);
+  for (let i=p-1;i<n;i++){
+    let m=0; for (let j=i-p+1;j<=i;j++) m+=a[j];
+    m/=p; let v=0;
+    for (let j=i-p+1;j<=i;j++){ const d=a[j]-m; v+=d*d; }
+    out[i]=Math.sqrt(v/p);
+  }
+  return out;
+}
+function rollMax(a, p){
+  const n=a.length, out=new Float64Array(n).fill(NaN);
+  for (let i=p-1;i<n;i++){
+    let m=-Infinity;
+    for (let j=i-p+1;j<=i;j++) if (a[j]>m) m=a[j];
+    out[i]=m;
+  }
+  return out;
+}
+function rollMin(a, p){
+  const n=a.length, out=new Float64Array(n).fill(NaN);
+  for (let i=p-1;i<n;i++){
+    let m=Infinity;
+    for (let j=i-p+1;j<=i;j++) if (a[j]<m) m=a[j];
+    out[i]=m;
+  }
+  return out;
+}
+
+function computeArrays(rows){
+  const n=rows.length;
+  const o=new Float64Array(n),h=new Float64Array(n),l=new Float64Array(n),
+        c=new Float64Array(n),v=new Float64Array(n),hour=new Float64Array(n),
+        dow=new Float64Array(n);
+  for (let i=0;i<n;i++){
+    o[i]=rows[i].o; h[i]=rows[i].h; l[i]=rows[i].l; c[i]=rows[i].c; v[i]=rows[i].v;
+    if (rows[i].dt){ hour[i]=rows[i].dt.getHours(); dow[i]=rows[i].dt.getDay(); }
+  }
+  const E=1e-9;
+  const ret1=new Float64Array(n), ret3=new Float64Array(n), ret5=new Float64Array(n),
+        ret10=new Float64Array(n), body=new Float64Array(n), upw=new Float64Array(n),
+        dnw=new Float64Array(n), cpos=new Float64Array(n), rngp=new Float64Array(n),
+        volr=new Float64Array(n), tr=new Float64Array(n);
+  for (let i=0;i<n;i++){
+    const rng=Math.max(h[i]-l[i], E);
+    ret1[i]  = i>0 ? (c[i]-c[i-1])/c[i-1] : 0;
+    ret3[i]  = i>2 ? (c[i]-c[i-3])/c[i-3] : 0;
+    ret5[i]  = i>4 ? (c[i]-c[i-5])/c[i-5] : 0;
+    ret10[i] = i>9 ? (c[i]-c[i-10])/c[i-10] : 0;
+    body[i] = (c[i]-o[i])/rng;
+    upw[i]  = (h[i]-Math.max(o[i],c[i]))/rng;
+    dnw[i]  = (Math.min(o[i],c[i])-l[i])/rng;
+    cpos[i] = (c[i]-l[i])/rng;
+    rngp[i] = (h[i]-l[i])/c[i];
+    tr[i]   = i>0 ? Math.max(h[i]-l[i], Math.abs(h[i]-c[i-1]), Math.abs(l[i]-c[i-1])) : h[i]-l[i];
+  }
+  const volMean = rollMean(v, 20);
+  for (let i=0;i<n;i++) volr[i] = volMean[i]>0 ? v[i]/volMean[i]-1 : 0;
+  const sma20=rollMean(c,20), sma50=rollMean(c,50), atr=rollMean(tr,14);
+  const std20=rollStd(c,20);
+  const hi20=rollMax(h,20), lo20=rollMin(l,20);
+  const gain=new Float64Array(n), loss=new Float64Array(n);
+  for (let i=1;i<n;i++){ const d=c[i]-c[i-1]; if (d>0) gain[i]=d; else loss[i]=-d; }
+  const ag=rollMean(gain,14), al=rollMean(loss,14);
+  const rsi=new Float64Array(n);
+  for (let i=0;i<n;i++){ const s=ag[i]+al[i]; rsi[i]=s>0 ? 100*ag[i]/s : 50; }
+  const ema12=new Float64Array(n), ema26=new Float64Array(n);
+  let e12=c[0], e26=c[0];
+  for (let i=0;i<n;i++){
+    e12=c[i]*0.15385 + e12*0.84615;
+    e26=c[i]*0.07407 + e26*0.92593;
+    ema12[i]=e12; ema26[i]=e26;
+  }
+  const macd=new Float64Array(n);
+  for (let i=0;i<n;i++) macd[i]=ema12[i]-ema26[i];
+  const ret2=new Float64Array(n);
+  for (let i=0;i<n;i++) ret2[i]=ret1[i]*ret1[i];
+  const m1=rollMean(ret1,20), m2=rollMean(ret2,20);
+  const vol20=new Float64Array(n);
+  for (let i=0;i<n;i++){ const vv=m2[i]-m1[i]*m1[i]; vol20[i]=isFinite(vv)&&vv>0?Math.sqrt(vv):0; }
+  const roc10 = new Float64Array(n);
+  for (let i=0;i<n;i++) roc10[i] = c[i] > E ? (c[i]-c[Math.max(0,i-10)])/Math.max(c[Math.max(0,i-10)],E) : 0;
+  return {n,o,h,l,c,v,hour,dow,ret1,ret3,ret5,ret10,body,upw,dnw,cpos,rngp,volr,
+          sma20,sma50,std20,hi20,lo20,atr,rsi,vol20,macd,roc10,tr};
+}
+
+/* ===== Features ===== */
+const PER_CANDLE = 11;
+const GLOBAL_F = 12;
+
+function seqFeature(A, i, W){
+  const seq = [];
+  for (let j=i-W+1; j<=i; j++){
+    seq.push([
+      A.ret1[j], A.ret3[j], A.ret5[j], A.ret10[j],
+      A.body[j], A.upw[j], A.dnw[j],
+      A.cpos[j], A.rngp[j], A.volr[j], A.roc10[j]
+    ]);
+  }
+  const cc=A.c[i];
+  const s20 = isFinite(A.sma20[i]) ? A.sma20[i] : cc;
+  const s50 = isFinite(A.sma50[i]) ? A.sma50[i] : cc;
+  const st20 = isFinite(A.std20[i]) ? A.std20[i] : 0;
+  const at  = isFinite(A.atr[i]) ? A.atr[i] : (A.h[i]-A.l[i]);
+  const rs  = isFinite(A.rsi[i]) ? A.rsi[i] : 50;
+  const vv  = isFinite(A.vol20[i]) ? A.vol20[i] : 0;
+  const mac = isFinite(A.macd[i]) ? A.macd[i] : 0;
+  const bbPos = st20>0 ? (cc-s20)/(2*st20) : 0;
+  const trendStr = at>0 ? Math.abs(s20-s50)/at : 0;
+  const rng20 = (A.hi20[i]-A.lo20[i]) || 1;
+  const rangePos = isFinite(A.lo20[i]) ? (cc-A.lo20[i])/rng20 - 0.5 : 0;
+
+  const global = [
+    (rs-50)/50, (cc-s20)/s20, (cc-s50)/s50, at/cc, vv*100, mac/cc,
+    Math.sin(2*Math.PI*A.hour[i]/24), Math.cos(2*Math.PI*A.hour[i]/24),
+    Math.sin(2*Math.PI*A.dow[i]/7), bbPos, trendStr, rangePos
+  ];
+  return { seq, global };
+}
+
+/* ===== Dense ===== */
+class Dense {
+  constructor(nin, nout, act, lr){
+    this.nin=nin; this.nout=nout; this.act=act; this.lr=lr;
+    this.b1=0.9; this.b2=0.999; this.eps=1e-8; this.t=0;
+    const lim=Math.sqrt(6/(nin+nout));
+    this.W=new Float32Array(nin*nout);
+    for (let i=0;i<this.W.length;i++) this.W[i]=(Math.random()*2-1)*lim;
+    this.b=new Float32Array(nout);
+    this.gW=new Float32Array(nin*nout); this.gb=new Float32Array(nout);
+    this.mW=new Float32Array(nin*nout); this.vW=new Float32Array(nin*nout);
+    this.mb=new Float32Array(nout); this.vb=new Float32Array(nout);
+    this.lastIn=null; this.lastOut=null;
+  }
+  forward(x){
+    this.lastIn=x;
+    const out=new Float32Array(this.nout);
+    for (let o=0;o<this.nout;o++){
+      let s=this.b[o]; const base=o*this.nin;
+      for (let i=0;i<this.nin;i++) s+=this.W[base+i]*x[i];
+      if (this.act==='tanh') out[o]=Math.tanh(s);
+      else if (this.act==='sigmoid') out[o]=1/(1+Math.exp(-s));
+      else out[o]=s;
+    }
+    this.lastOut=out;
+    return out;
+  }
+  backward(dOut){
+    const dIn=new Float32Array(this.nin);
+    const x=this.lastIn, out=this.lastOut;
+    const dPre=new Float32Array(this.nout);
+    for (let o=0;o<this.nout;o++){
+      let g=dOut[o];
+      if (this.act==='tanh') g*=(1-out[o]*out[o]);
+      else if (this.act==='sigmoid') g*=out[o]*(1-out[o]);
+      dPre[o]=g;
+    }
+    for (let o=0;o<this.nout;o++){
+      const g=dPre[o], base=o*this.nin;
+      for (let i=0;i<this.nin;i++){
+        this.gW[base+i]+=g*x[i];
+        dIn[i]+=this.W[base+i]*g;
+      }
+      this.gb[o]+=g;
+    }
+    return dIn;
+  }
+  step(bs){
+    this.t++;
+    const c1=1-Math.pow(this.b1,this.t), c2=1-Math.pow(this.b2,this.t), inv=1/bs;
+    for (let k=0;k<this.W.length;k++){
+      const g=this.gW[k]*inv;
+      this.mW[k]=this.b1*this.mW[k]+(1-this.b1)*g;
+      this.vW[k]=this.b2*this.vW[k]+(1-this.b2)*g*g;
+      this.W[k]-=this.lr*(this.mW[k]/c1)/(Math.sqrt(this.vW[k]/c2)+this.eps);
+    }
+    for (let k=0;k<this.b.length;k++){
+      const g=this.gb[k]*inv;
+      this.mb[k]=this.b1*this.mb[k]+(1-this.b1)*g;
+      this.vb[k]=this.b2*this.vb[k]+(1-this.b2)*g*g;
+      this.b[k]-=this.lr*(this.mb[k]/c1)/(Math.sqrt(this.vb[k]/c2)+this.eps);
+    }
+  }
+  zeroGrad(){ this.gW.fill(0); this.gb.fill(0); }
+  snapshot(){ return {W:this.W.slice(), b:this.b.slice()}; }
+  restore(s){ this.W.set(s.W); this.b.set(s.b); }
+}
+
+/* ===== GRU ===== */
+class GRU {
+  constructor(D, H, lr){
+    this.D=D; this.H=H; this.lr=lr;
+    const mk=(n,fan)=>{ const a=new Float32Array(n),lim=Math.sqrt(1/fan);
+      for (let i=0;i<n;i++) a[i]=(Math.random()*2-1)*lim; return a; };
+    this.Wz=mk(H*D,D); this.Wr=mk(H*D,D); this.Wh=mk(H*D,D);
+    this.Uz=mk(H*H,H); this.Ur=mk(H*H,H); this.Uh=mk(H*H,H);
+    this.bz=new Float32Array(H); this.br=new Float32Array(H); this.bh=new Float32Array(H);
+    this.gWz=new Float32Array(H*D); this.gWr=new Float32Array(H*D); this.gWh=new Float32Array(H*D);
+    this.gUz=new Float32Array(H*H); this.gUr=new Float32Array(H*H); this.gUh=new Float32Array(H*H);
+    this.gbz=new Float32Array(H); this.gbr=new Float32Array(H); this.gbh=new Float32Array(H);
+    this.mWz=new Float32Array(H*D); this.vWz=new Float32Array(H*D);
+    this.mWr=new Float32Array(H*D); this.vWr=new Float32Array(H*D);
+    this.mWh=new Float32Array(H*D); this.vWh=new Float32Array(H*D);
+    this.mUz=new Float32Array(H*H); this.vUz=new Float32Array(H*H);
+    this.mUr=new Float32Array(H*H); this.vUr=new Float32Array(H*H);
+    this.mUh=new Float32Array(H*H); this.vUh=new Float32Array(H*H);
+    this.mbz=new Float32Array(H); this.vbz=new Float32Array(H);
+    this.mbr=new Float32Array(H); this.vbr=new Float32Array(H);
+    this.mbh=new Float32Array(H); this.vbh=new Float32Array(H);
+    this.t=0; this.b1=0.9; this.b2=0.999; this.eps=1e-8; this.caches=null;
+  }
+  forward(seq, storeCache){
+    const T=seq.length, H=this.H, D=this.D;
+    let h=new Float32Array(H);
+    const caches = storeCache ? [] : null;
+    for (let t=0; t<T; t++){
+      const x=seq[t];
+      const z=new Float32Array(H), r=new Float32Array(H), n=new Float32Array(H), h_new=new Float32Array(H);
+      for (let o=0;o<H;o++){
+        let s=this.bz[o]; const bW=o*D, bU=o*H;
+        for (let i=0;i<D;i++) s+=this.Wz[bW+i]*x[i];
+        for (let i=0;i<H;i++) s+=this.Uz[bU+i]*h[i];
+        z[o]=1/(1+Math.exp(-s));
+      }
+      for (let o=0;o<H;o++){
+        let s=this.br[o]; const bW=o*D, bU=o*H;
+        for (let i=0;i<D;i++) s+=this.Wr[bW+i]*x[i];
+        for (let i=0;i<H;i++) s+=this.Ur[bU+i]*h[i];
+        r[o]=1/(1+Math.exp(-s));
+      }
+      const rh=new Float32Array(H);
+      for (let i=0;i<H;i++) rh[i]=r[i]*h[i];
+      for (let o=0;o<H;o++){
+        let s=this.bh[o]; const bW=o*D, bU=o*H;
+        for (let i=0;i<D;i++) s+=this.Wh[bW+i]*x[i];
+        for (let i=0;i<H;i++) s+=this.Uh[bU+i]*rh[i];
+        n[o]=Math.tanh(s);
+      }
+      for (let o=0;o<H;o++) h_new[o]=(1-z[o])*h[o]+z[o]*n[o];
+      if (storeCache) caches.push({x, h_prev:h, z, r, n, rh});
+      h=h_new;
+    }
+    if (storeCache) this.caches=caches;
+    return h;
+  }
+  backward(dh_last){
+    const T=this.caches.length, H=this.H, D=this.D;
+    let dh=dh_last;
+    for (let t=T-1;t>=0;t--){
+      const {x, h_prev, z, r, n, rh}=this.caches[t];
+      const dh_prev=new Float32Array(H);
+      const dz=new Float32Array(H), dn=new Float32Array(H);
+      for (let i=0;i<H;i++){
+        dh_prev[i]=(1-z[i])*dh[i];
+        dz[i]=(n[i]-h_prev[i])*dh[i];
+        dn[i]=z[i]*dh[i];
+      }
+      const dpre_n=new Float32Array(H);
+      for (let i=0;i<H;i++) dpre_n[i]=(1-n[i]*n[i])*dn[i];
+      for (let o=0;o<H;o++){
+        const g=dpre_n[o], bW=o*D;
+        for (let i=0;i<D;i++) this.gWh[bW+i]+=g*x[i];
+      }
+      for (let o=0;o<H;o++){
+        const g=dpre_n[o], bU=o*H;
+        for (let i=0;i<H;i++) this.gUh[bU+i]+=g*rh[i];
+      }
+      for (let o=0;o<H;o++) this.gbh[o]+=dpre_n[o];
+      const drh=new Float32Array(H);
+      for (let i=0;i<H;i++){
+        let s=0;
+        for (let o=0;o<H;o++) s+=this.Uh[o*H+i]*dpre_n[o];
+        drh[i]=s;
+      }
+      const dr=new Float32Array(H);
+      for (let i=0;i<H;i++){ dr[i]=drh[i]*h_prev[i]; dh_prev[i]+=drh[i]*r[i]; }
+      const dpre_z=new Float32Array(H);
+      for (let i=0;i<H;i++) dpre_z[i]=z[i]*(1-z[i])*dz[i];
+      for (let o=0;o<H;o++){
+        const g=dpre_z[o], bW=o*D;
+        for (let i=0;i<D;i++) this.gWz[bW+i]+=g*x[i];
+      }
+      for (let o=0;o<H;o++){
+        const g=dpre_z[o], bU=o*H;
+        for (let i=0;i<H;i++) this.gUz[bU+i]+=g*h_prev[i];
+      }
+      for (let o=0;o<H;o++) this.gbz[o]+=dpre_z[o];
+      for (let i=0;i<H;i++){
+        let s=0;
+        for (let o=0;o<H;o++) s+=this.Uz[o*H+i]*dpre_z[o];
+        dh_prev[i]+=s;
+      }
+      const dpre_r=new Float32Array(H);
+      for (let i=0;i<H;i++) dpre_r[i]=r[i]*(1-r[i])*dr[i];
+      for (let o=0;o<H;o++){
+        const g=dpre_r[o], bW=o*D;
+        for (let i=0;i<D;i++) this.gWr[bW+i]+=g*x[i];
+      }
+      for (let o=0;o<H;o++){
+        const g=dpre_r[o], bU=o*H;
+        for (let i=0;i<H;i++) this.gUr[bU+i]+=g*h_prev[i];
+      }
+      for (let o=0;o<H;o++) this.gbr[o]+=dpre_r[o];
+      for (let i=0;i<H;i++){
+        let s=0;
+        for (let o=0;o<H;o++) s+=this.Ur[o*H+i]*dpre_r[o];
+        dh_prev[i]+=s;
+      }
+      dh=dh_prev;
+    }
+  }
+  step(bs){
+    this.t++;
+    const c1=1-Math.pow(this.b1,this.t), c2=1-Math.pow(this.b2,this.t), inv=1/bs;
+    const upd=(W,g,m,v)=>{ for (let k=0;k<W.length;k++){
+      const gg=g[k]*inv;
+      m[k]=this.b1*m[k]+(1-this.b1)*gg;
+      v[k]=this.b2*v[k]+(1-this.b2)*gg*gg;
+      W[k]-=this.lr*(m[k]/c1)/(Math.sqrt(v[k]/c2)+this.eps);
+    }};
+    upd(this.Wz,this.gWz,this.mWz,this.vWz); upd(this.Wr,this.gWr,this.mWr,this.vWr);
+    upd(this.Wh,this.gWh,this.mWh,this.vWh); upd(this.Uz,this.gUz,this.mUz,this.vUz);
+    upd(this.Ur,this.gUr,this.mUr,this.vUr); upd(this.Uh,this.gUh,this.mUh,this.vUh);
+    upd(this.bz,this.gbz,this.mbz,this.vbz); upd(this.br,this.gbr,this.mbr,this.vbr);
+    upd(this.bh,this.gbh,this.mbh,this.vbh);
+  }
+  zeroGrad(){
+    this.gWz.fill(0); this.gWr.fill(0); this.gWh.fill(0);
+    this.gUz.fill(0); this.gUr.fill(0); this.gUh.fill(0);
+    this.gbz.fill(0); this.gbr.fill(0); this.gbh.fill(0);
+  }
+  snapshot(){ return {Wz:this.Wz.slice(),Wr:this.Wr.slice(),Wh:this.Wh.slice(),
+    Uz:this.Uz.slice(),Ur:this.Ur.slice(),Uh:this.Uh.slice(),
+    bz:this.bz.slice(),br:this.br.slice(),bh:this.bh.slice()}; }
+  restore(s){ this.Wz.set(s.Wz); this.Wr.set(s.Wr); this.Wh.set(s.Wh);
+    this.Uz.set(s.Uz); this.Ur.set(s.Ur); this.Uh.set(s.Uh);
+    this.bz.set(s.bz); this.br.set(s.br); this.bh.set(s.bh); }
+}
+
+/* ===== Dual-Head Model ===== */
+class Model {
+  constructor(D, H, G, hidden1, outDim, lr){
+    this.gru = new GRU(D, H, lr);
+    this.shared = new Dense(H + G, hidden1, 'tanh', lr);
+    this.regHead = new Dense(hidden1, outDim, 'none', lr);
+    this.clsHead = new Dense(hidden1, 1, 'sigmoid', lr);
+    this.H = H; this.G = G;
+  }
+  forward(seq, global, storeCache){
+    const hT = this.gru.forward(seq, storeCache);
+    const cat = new Float32Array(this.H + this.G);
+    for (let i=0;i<this.H;i++) cat[i]=hT[i];
+    for (let i=0;i<this.G;i++) cat[this.H+i]=global[i];
+    const a1 = this.shared.forward(cat);
+    return { reg: this.regHead.forward(a1), cls: this.clsHead.forward(a1) };
+  }
+  backward(dReg, dCls){
+    const da1_reg = this.regHead.backward(dReg);
+    const da1_cls = this.clsHead.backward(dCls);
+    const da1 = new Float32Array(da1_reg.length);
+    for (let i=0;i<da1.length;i++) da1[i] = da1_reg[i] + da1_cls[i];
+    const dcat = this.shared.backward(da1);
+    const dhT = new Float32Array(this.H);
+    for (let i=0;i<this.H;i++) dhT[i]=dcat[i];
+    this.gru.backward(dhT);
+  }
+  step(bs){ this.gru.step(bs); this.shared.step(bs); this.regHead.step(bs); this.clsHead.step(bs); }
+  zeroGrad(){ this.gru.zeroGrad(); this.shared.zeroGrad(); this.regHead.zeroGrad(); this.clsHead.zeroGrad(); }
+  setLR(lr){ this.gru.lr=lr; this.shared.lr=lr; this.regHead.lr=lr; this.clsHead.lr=lr; }
+  snapshot(){ return { gru:this.gru.snapshot(), shared:this.shared.snapshot(),
+    regHead:this.regHead.snapshot(), clsHead:this.clsHead.snapshot() }; }
+  restore(s){ this.gru.restore(s.gru); this.shared.restore(s.shared);
+    this.regHead.restore(s.regHead); this.clsHead.restore(s.clsHead); }
+}
+
+/* ===== Dataset ===== */
+function buildDataset(A, W, mode){
+  const n=A.n, outDim = mode==='ohlc' ? 20 : 5;
+  const Xs=[], Yreg=[], Ycls=[], idxs=[];
+  for (let i=W-1; i<n-5; i++){
+    const f = seqFeature(A, i, W);
+    const base = A.c[i];
+    const y = new Float32Array(outDim);
+    let k2=0;
+    for (let k=1;k<=5;k++){
+      if (mode==='close') y[k2++]=(A.c[i+k]-base)/base*100;
+      else {
+        y[k2++]=(A.o[i+k]-base)/base*100;
+        y[k2++]=(A.h[i+k]-base)/base*100;
+        y[k2++]=(A.l[i+k]-base)/base*100;
+        y[k2++]=(A.c[i+k]-base)/base*100;
+      }
+    }
+    const nextRet = (A.c[i+1]-A.c[i])/A.c[i];
+    Xs.push(f); Yreg.push(y); Ycls.push(nextRet>0?1:0); idxs.push(i);
+  }
+  return { Xs, Yreg, Ycls, idxs, outDim };
+}
+
+function fitStats(Xs, s, e){
+  const D = Xs[0].seq[0].length, G = Xs[0].global.length;
+  const meanS=new Float64Array(D), stdS=new Float64Array(D);
+  const meanG=new Float64Array(G), stdG=new Float64Array(G);
+  const m=Math.max(1,e-s);
+  for (let i=s;i<e;i++){
+    const f=Xs[i];
+    for (let t=0;t<f.seq.length;t++) for (let d=0;d<D;d++) meanS[d]+=f.seq[t][d];
+    for (let g=0;g<G;g++) meanG[g]+=f.global[g];
+  }
+  const T=Xs[0].seq.length;
+  for (let d=0;d<D;d++) meanS[d]/=(m*T);
+  for (let g=0;g<G;g++) meanG[g]/=m;
+  for (let i=s;i<e;i++){
+    const f=Xs[i];
+    for (let t=0;t<f.seq.length;t++) for (let d=0;d<D;d++){ const dd=f.seq[t][d]-meanS[d]; stdS[d]+=dd*dd; }
+    for (let g=0;g<G;g++){ const dd=f.global[g]-meanG[g]; stdG[g]+=dd*dd; }
+  }
+  for (let d=0;d<D;d++){ stdS[d]=Math.sqrt(stdS[d]/(m*T)); if (stdS[d]<1e-8) stdS[d]=1; }
+  for (let g=0;g<G;g++){ stdG[g]=Math.sqrt(stdG[g]/m); if (stdG[g]<1e-8) stdG[g]=1; }
+  return { meanS, stdS, meanG, stdG };
+}
+
+function fitStatsY(Y, s, e){
+  const D=Y[0].length;
+  const mean=new Float64Array(D), std=new Float64Array(D);
+  const m=Math.max(1,e-s);
+  for (let i=s;i<e;i++) for (let d=0;d<D;d++) mean[d]+=Y[i][d];
+  for (let d=0;d<D;d++) mean[d]/=m;
+  for (let i=s;i<e;i++) for (let d=0;d<D;d++){ const dd=Y[i][d]-mean[d]; std[d]+=dd*dd; }
+  for (let d=0;d<D;d++){ std[d]=Math.sqrt(std[d]/m); if (std[d]<1e-8) std[d]=1; }
+  return { mean, std };
+}
+
+/* ===== Train ===== */
+async function trainModel(cfg, Xtr, Ytr, Ctr, Xva, Yva, Cva, onEpoch){
+  const model = new Model(Xtr[0].seq[0].length, cfg.H, Xtr[0].global.length,
+    cfg.hidden1, Ytr[0].length, cfg.lr);
+  const N=Xtr.length, bs=cfg.batch, nb=Math.ceil(N/bs);
+  const perm=new Int32Array(N); for (let i=0;i<N;i++) perm[i]=i;
+  let nPos=0, nNeg=0;
+  for (const t of Ctr){ if (t===1) nPos++; else nNeg++; }
+  const wPos = nPos>0 && nNeg>0 ? (nPos+nNeg)/(2*nPos) : 1;
+  const wNeg = nPos>0 && nNeg>0 ? (nPos+nNeg)/(2*nNeg) : 1;
+  let bestScore=-Infinity, bestSnap=model.snapshot(), bestEp=0;
+  const t0 = performance.now();
+  for (let ep=1; ep<=cfg.epochs; ep++){
+    const lrNow = cfg.lr * 0.5 * (1 + Math.cos(Math.PI * (ep-1) / cfg.epochs));
+    model.setLR(lrNow);
+    for (let i=N-1;i>0;i--){ const j=(Math.random()*(i+1))|0;
+      const t=perm[i]; perm[i]=perm[j]; perm[j]=t; }
+    for (let b=0;b<nb;b++){
+      const s0=b*bs, s1=Math.min(N,s0+bs);
+      model.zeroGrad();
+      for (let s=s0;s<s1;s++){
+        const k=perm[s];
+        const out = model.forward(Xtr[k].seq, Xtr[k].global, true);
+        const dReg = new Float32Array(out.reg.length);
+        for (let i=0;i<out.reg.length;i++) dReg[i]=2*(out.reg[i]-Ytr[k][i]);
+        const p = Math.max(1e-7, Math.min(1-1e-7, out.cls[0]));
+        const ySoft = Ctr[k]===1 ? 0.95 : 0.05;
+        const w = Ctr[k]===1 ? wPos : wNeg;
+        const dCls = new Float32Array(1);
+        dCls[0] = w * cfg.clsW * (-(ySoft/p) + (1-ySoft)/(1-p));
+        model.backward(dReg, dCls);
+      }
+      model.step(s1-s0);
+    }
+    let correct=0;
+    for (let i=0;i<Xva.length;i++){
+      const out = model.forward(Xva[i].seq, Xva[i].global, false);
+      const pred = out.cls[0] > 0.5 ? 1 : 0;
+      if (pred === Cva[i]) correct++;
+    }
+    const acc = correct/Math.max(1,Xva.length);
+    if (acc > bestScore){ bestScore=acc; bestSnap=model.snapshot(); bestEp=ep; }
+    onEpoch(ep, acc, bestScore, lrNow, (performance.now()-t0)/1000);
+    await sleep(0);
+  }
+  model.restore(bestSnap);
+  return { model, bestEp, bestScore };
+}
+
+/* ===== Backtest ===== */
+function simulateTrade(A, idx, direction, entry, sl, tp, maxBars){
+  const end = Math.min(A.n - 1, idx + maxBars);
+  let exitType = 'TIME', exitPrice = A.c[end];
+  for (let j = idx + 1; j <= end; j++){
+    const h = A.h[j], l = A.l[j];
+    if (direction === 'BUY'){
+      if (l <= sl){ exitType='SL'; exitPrice=sl; break; }
+      if (h >= tp){ exitType='TP'; exitPrice=tp; break; }
+    } else {
+      if (h >= sl){ exitType='SL'; exitPrice=sl; break; }
+      if (l <= tp){ exitType='TP'; exitPrice=tp; break; }
+    }
+  }
+  const risk = Math.abs(entry - sl);
+  const pnl = (direction === 'BUY') ? (exitPrice - entry) : (entry - exitPrice);
+  return { exitType, exitPrice, rMultiple: risk > 0 ? pnl/risk : 0 };
+}
+
+function backtestStrategy(preds, A, params){
+  const trades = [];
+  let equity = 0, peak = 0, maxDD = 0;
+  let winR = 0, lossR = 0, wins = 0, losses = 0, timeouts = 0;
+  for (const p of preds){
+    const conf = Math.abs(p.prob - 0.5) * 200;
+    if (conf < params.minConf) continue;
+    const direction = p.prob > 0.5 ? 'BUY' : 'SELL';
+    const risk = p.atr * params.slMult;
+    if (risk <= 0) continue;
+    let entry = p.entry, sl, tp;
+    if (direction === 'BUY'){ sl = entry - risk; tp = entry + risk * params.rr; }
+    else { sl = entry + risk; tp = entry - risk * params.rr; }
+    const t = simulateTrade(A, p.idx, direction, entry, sl, tp, params.horizon);
+    if (t.exitType === 'TIME') timeouts++;
+    equity += t.rMultiple;
+    if (equity > peak) peak = equity;
+    const dd = peak - equity;
+    if (dd > maxDD) maxDD = dd;
+    if (t.rMultiple > 0){ winR += t.rMultiple; wins++; }
+    else if (t.rMultiple < 0){ lossR += -t.rMultiple; losses++; }
+    trades.push({ idx: p.idx, direction, entry, sl, tp, equity, ...t });
+  }
+  const n = trades.length;
+  const pf = lossR > 0 ? winR/lossR : (winR > 0 ? 999 : 0);
+  const wr = n > 0 ? wins/n*100 : 0;
+  const expectancy = n > 0 ? equity/n : 0;
+  return { trades, netR: equity, pf, wr, maxDD, expectancy, n, wins, losses, timeouts,
+           grossWin: winR, grossLoss: lossR };
+}
+
+async function optimizeSLTP(preds, A, cfg, onProgress){
+  const slGrid   = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0];
+  const rrGrid   = [1.0, 1.5, 2.0, 2.5, 3.0, 4.0];
+  const confGrid = [5, 10, 15, 20, 25, 30];
+  const total = slGrid.length * rrGrid.length * confGrid.length;
+  let done = 0;
+  const allResults = [];
+  let best = null;
+  for (const conf of confGrid){
+    for (const sl of slGrid){
+      for (const rr of rrGrid){
+        const r = backtestStrategy(preds, A, { slMult: sl, rr, minConf: conf, horizon: cfg.horizon });
+        allResults.push({ sl, rr, conf, netR: r.netR, n: r.n, pf: r.pf, wr: r.wr, dd: r.maxDD });
+        if (r.n >= cfg.minTrades){
+          const score = r.netR + r.expectancy * 0.5;
+          if (!best || score > best.score){
+            best = { score, slMult: sl, rr, minConf: conf, result: r };
+          }
+        }
+        done++;
+        if (done % 30 === 0) onProgress(done, total, best);
+        if (done % 60 === 0) await sleep(0);
+      }
+    }
+  }
+  allResults.sort((a,b)=>b.netR - a.netR);
+  return { best, allResults };
+}
+
+function predictAll(models, Xva, idxVa, A){
+  const preds = [];
+  for (let s=0; s<Xva.length; s++){
+    const regs=[], clss=[];
+    for (const m of models){
+      const o = m.forward(Xva[s].seq, Xva[s].global, false);
+      regs.push(o.reg); clss.push(o.cls[0]);
+    }
+    let avgCls=0; for (const p of clss) avgCls+=p; avgCls/=clss.length;
+    const idx = idxVa[s];
+    let atrSum=0, atrCnt=0;
+    for (let i=Math.max(1, idx-13); i<=idx; i++){
+      const tr = Math.max(A.h[i]-A.l[i],
+        Math.abs(A.h[i]-A.c[i-1]), Math.abs(A.l[i]-A.c[i-1]));
+      atrSum += tr; atrCnt++;
+    }
+    const atr = atrCnt>0 ? atrSum/atrCnt : (A.h[idx]-A.l[idx]);
+    preds.push({ idx, prob: avgCls, entry: A.c[idx], atr });
+  }
+  return preds;
+}
+
+/* ===== Forecast ===== */
+function ensemblePredict(models, seq, global){
+  const regs=[], clss=[];
+  for (const m of models){
+    const out = m.forward(seq, global, false);
+    regs.push(out.reg); clss.push(out.cls[0]);
+  }
+  const avgReg=new Float32Array(regs[0].length);
+  for (const p of regs) for (let i=0;i<avgReg.length;i++) avgReg[i]+=p[i];
+  for (let i=0;i<avgReg.length;i++) avgReg[i]/=regs.length;
+  let avgCls=0; for (const p of clss) avgCls+=p; avgCls/=clss.length;
+  let stdCls=0;
+  if (clss.length>1){
+    for (const p of clss){ const d=p-avgCls; stdCls+=d*d; }
+    stdCls=Math.sqrt(stdCls/clss.length);
+  }
+  const stdReg=new Float32Array(avgReg.length);
+  if (regs.length>1){
+    for (const p of regs) for (let i=0;i<stdReg.length;i++){ const d=p[i]-avgReg[i]; stdReg[i]+=d*d; }
+    for (let i=0;i<stdReg.length;i++) stdReg[i]=Math.sqrt(stdReg[i]/regs.length);
+  }
+  return { avgReg, stdReg, avgCls, stdCls };
+}
+
+function forecast(models, A, W, stats, yStats, mode, lastIdx){
+  const f = seqFeature(A, lastIdx, W);
+  const seq = [];
+  for (let t=0;t<f.seq.length;t++){
+    const v=new Float32Array(f.seq[t].length);
+    for (let d=0;d<v.length;d++) v[d]=(f.seq[t][d]-stats.meanS[d])/stats.stdS[d];
+    seq.push(v);
+  }
+  const global = new Float32Array(f.global.length);
+  for (let g=0;g<global.length;g++) global[g]=(f.global[g]-stats.meanG[g])/stats.stdG[g];
+  const ens = ensemblePredict(models, seq, global);
+  const avg = new Float64Array(ens.avgReg.length), std = new Float64Array(ens.stdReg.length);
+  for (let i=0;i<avg.length;i++){
+    avg[i] = ens.avgReg[i]*yStats.std[i] + yStats.mean[i];
+    std[i] = ens.stdReg[i]*yStats.std[i];
+  }
+  return { avg, std, prob: ens.avgCls, probStd: ens.stdCls };
+}
+
+function buildPredictedCandles(y, std, A, lastIdx, mode){
+  const base = A.c[lastIdx], candles=[]; let prevClose=base;
+  let sumUp=0,sumDn=0,cnt=0;
+  for (let j=Math.max(1,lastIdx-19); j<=lastIdx; j++){
+    sumUp += A.h[j]-Math.max(A.o[j],A.c[j]);
+    sumDn += Math.min(A.o[j],A.c[j])-A.l[j]; cnt++;
+  }
+  const avgUp=cnt?sumUp/cnt:0, avgDn=cnt?sumDn/cnt:0;
+  for (let k=0;k<5;k++){
+    let o,h,l,c,s;
+    if (mode==='close'){
+      c=base*(1+y[k]/100); s=base*(std[k]/100);
+      o=prevClose; h=Math.max(o,c)+avgUp; l=Math.min(o,c)-avgDn;
+    } else {
+      const b=k*4;
+      o=base*(1+y[b]/100); h=base*(1+y[b+1]/100);
+      l=base*(1+y[b+2]/100); c=base*(1+y[b+3]/100);
+      h=Math.max(h,o,c); l=Math.min(l,o,c); s=base*(std[b+3]/100);
+    }
+    candles.push({o,h,l,c,std:s}); prevClose=c;
+  }
+  return candles;
+}
+
+function generateSignal(fc, A, lastIdx, opts){
+  const { slMult=1.5, rrRatio=2.0, minConf=20, capital=10000, riskPct=1.0,
+    pipValue=1, optimized=false } = opts;
+  const prob = fc.prob;
+  const conf = Math.abs(prob - 0.5) * 200;
+  let atrSum=0, atrCnt=0;
+  for (let i=Math.max(1, lastIdx-13); i<=lastIdx; i++){
+    const tr = Math.max(A.h[i]-A.l[i], Math.abs(A.h[i]-A.c[i-1]), Math.abs(A.l[i]-A.c[i-1]));
+    atrSum += tr; atrCnt++;
+  }
+  const atr = atrCnt>0 ? atrSum/atrCnt : (A.h[lastIdx]-A.l[lastIdx]);
+  const entry = A.c[lastIdx];
+  if (conf < minConf){
+    return { action:'WAIT', prob, conf, atr, entry, sl:null, tp:null, rr:null,
+      reason:`اطمینان مدل ${conf.toFixed(1)}٪ کمتر از آستانه ${minConf}٪ است. صبر کنید.`,
+      size:null, riskAmount:null, optimized };
+  }
+  let action, sl, tp, rr, risk, reward;
+  const riskDist = atr * slMult;
+  if (prob > 0.5){
+    action = 'BUY'; sl = entry - riskDist; risk = riskDist;
+    const tpRR = entry + riskDist * rrRatio;
+    const tpModel = entry * (1 + fc.avg[4]/100);
+    let tpCand = tpModel > entry ? Math.min(tpRR, tpModel) : tpRR;
+    if (tpCand - entry < risk * 1.0) tpCand = tpRR;
+    tp = tpCand; reward = tp - entry; rr = reward/risk;
+  } else {
+    action = 'SELL'; sl = entry + riskDist; risk = riskDist;
+    const tpRR = entry - riskDist * rrRatio;
+    const tpModel = entry * (1 + fc.avg[4]/100);
+    let tpCand = tpModel < entry ? Math.max(tpRR, tpModel) : tpRR;
+    if (entry - tpCand < risk * 1.0) tpCand = tpRR;
+    tp = tpCand; reward = entry - tp; rr = reward/risk;
+  }
+  const riskAmount = capital * (riskPct/100);
+  const size = risk > 0 ? riskAmount / (risk * pipValue) : 0;
+  const optTag = optimized ? '<span class="opt-tag">OPTIMIZED</span>' : '';
+  const reasonHTML = `${optTag}<b>تحلیل:</b> Classification با احتمال
+    <b style="color:${prob>0.5?'#26a69a':'#ef5350'}">${(prob*100).toFixed(1)}٪</b>
+    جهت <b>${action==='BUY'?'صعودی':'نزولی'}</b> را پیش‌بینی می‌کند.
+    ATR=${atr.toFixed(2)}$ · SL=${slMult.toFixed(2)}×ATR=$${risk.toFixed(2)} ·
+    TP با R:R=${rrRatio.toFixed(2)}:1 · سود: <b style="color:#26a69a">$${reward.toFixed(2)}</b> ·
+    زیان: <b style="color:#ef5350">$${risk.toFixed(2)}</b>.`;
+  return { action, prob, conf, atr, entry, sl, tp, rr, risk, reward, reason:reasonHTML,
+           size, riskAmount, optimized };
+}
+
+function renderSignal(sig){
+  const box = $('signalBox');
+  box.className = 'signal-box ' + (sig.action==='BUY'?'buy':sig.action==='SELL'?'sell':'wait');
+  $('sigAction').textContent = sig.action==='BUY'?'BUY':sig.action==='SELL'?'SELL':'WAIT';
+  $('sigEmoji').textContent = sig.action==='BUY'?'🟢':sig.action==='SELL'?'🔴':'⏳';
+  $('sigConf').textContent = sig.conf.toFixed(1)+'%';
+  if (sig.action==='WAIT'){
+    $('sigEntry').textContent = sig.entry.toFixed(2);
+    $('sigSL').textContent='—'; $('sigTP').textContent='—';
+    $('sigRR').textContent='—'; $('sigSize').textContent='—';
+    $('sigReason').innerHTML = sig.reason;
+    return;
+  }
+  const riskDist = Math.abs(sig.entry - sig.sl);
+  const rewardDist = Math.abs(sig.tp - sig.entry);
+  $('sigEntry').innerHTML = `${sig.entry.toFixed(2)} <span class="sd-sub">(قیمت فعلی)</span>`;
+  $('sigSL').innerHTML = `${sig.sl.toFixed(2)} <span class="sd-sub">(${riskDist.toFixed(2)}$)</span>`;
+  $('sigTP').innerHTML = `${sig.tp.toFixed(2)} <span class="sd-sub">(${rewardDist.toFixed(2)}$)</span>`;
+  $('sigRR').textContent = sig.rr.toFixed(2)+' : 1';
+  const sizeStr = sig.size >= 1 ? sig.size.toFixed(2) : sig.size.toFixed(3);
+  $('sigSize').innerHTML = `${sizeStr} لات <span class="sd-sub">(ریسک $${sig.riskAmount.toFixed(2)})</span>`;
+  $('sigReason').innerHTML = sig.reason;
+}
+
+function drawChart(hist, pred, sig){
+  const canvas=$('chart'); const rect=canvas.getBoundingClientRect();
+  const W=Math.max(340, rect.width), H=380;
+  const dpr=window.devicePixelRatio||1;
+  canvas.width=Math.round(W*dpr); canvas.height=Math.round(H*dpr);
+  canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
+  const all=hist.concat(pred); if (!all.length) return;
+  let lo=Infinity, hi=-Infinity;
+  for (const cd of all){ if (cd.l<lo) lo=cd.l; if (cd.h>hi) hi=cd.h; }
+  if (sig && sig.sl !== null){
+    if (sig.sl < lo) lo=sig.sl; if (sig.sl > hi) hi=sig.sl;
+    if (sig.tp < lo) lo=sig.tp; if (sig.tp > hi) hi=sig.tp;
+  }
+  const rng=(hi-lo)||1; lo-=rng*0.06; hi+=rng*0.06;
+  const padL=10, padR=76, padT=14, padB=22;
+  const plotW=W-padL-padR, plotH=H-padT-padB;
+  const nTot=all.length, cw=plotW/nTot, bw=Math.max(1.5, cw*0.62);
+  const X=i=>padL + i*cw + cw/2, Y=p=>padT + (hi-p)/(hi-lo)*plotH;
+  ctx.font='10px monospace'; ctx.textAlign='left'; ctx.textBaseline='middle';
+  for (let g=0;g<=5;g++){
+    const p=lo+(hi-lo)*g/5, y=Y(p);
+    ctx.strokeStyle='rgba(255,255,255,0.06)';
+    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.fillText(p.toFixed(1), W-padR+6, y);
+  }
+  for (let i=0;i<hist.length;i++){
+    const cd=hist[i], up=cd.c>=cd.o, col=up?'#26a69a':'#ef5350';
+    ctx.strokeStyle=col; ctx.fillStyle=col;
+    ctx.beginPath(); ctx.moveTo(X(i),Y(cd.h)); ctx.lineTo(X(i),Y(cd.l)); ctx.stroke();
+    const y1=Y(Math.max(cd.o,cd.c)), y2=Y(Math.min(cd.o,cd.c));
+    ctx.fillRect(X(i)-bw/2, y1, bw, Math.max(1,y2-y1));
+  }
+  for (let k=0;k<pred.length;k++){
+    const i=hist.length+k, cd=pred[k];
+    ctx.strokeStyle='#ffd166';
+    ctx.fillStyle=cd.c>=cd.o?'rgba(255,209,102,0.9)':'rgba(255,150,90,0.9)';
+    ctx.beginPath(); ctx.moveTo(X(i),Y(cd.h)); ctx.lineTo(X(i),Y(cd.l)); ctx.stroke();
+    const y1=Y(Math.max(cd.o,cd.c)), y2=Y(Math.min(cd.o,cd.c));
+    ctx.fillRect(X(i)-bw/2, y1, bw, Math.max(2,y2-y1));
+  }
+  ctx.beginPath(); ctx.setLineDash([3,3]); ctx.strokeStyle='rgba(167,139,250,0.5)';
+  for (let k=0;k<pred.length;k++){
+    const i=hist.length+k;
+    const yHi=Y(pred[k].c + 1.5*pred[k].std), yLo=Y(pred[k].c - 1.5*pred[k].std);
+    ctx.moveTo(X(i), yLo); ctx.lineTo(X(i), yHi);
+  }
+  ctx.stroke(); ctx.setLineDash([]);
+  const sepX=padL + hist.length*cw;
+  ctx.setLineDash([5,4]); ctx.strokeStyle='rgba(255,209,102,0.5)';
+  ctx.beginPath(); ctx.moveTo(sepX,padT); ctx.lineTo(sepX,padT+plotH); ctx.stroke();
+  ctx.setLineDash([]);
+  if (sig && sig.sl !== null){
+    const startX = sepX, endX = padL + plotW;
+    const ySL = Y(sig.sl);
+    ctx.setLineDash([6,4]); ctx.strokeStyle='#ef5350'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(startX,ySL); ctx.lineTo(endX,ySL); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font='bold 10px monospace'; ctx.textAlign='left';
+    ctx.fillStyle='#ef5350';
+    ctx.fillText('SL '+sig.sl.toFixed(2), startX+4, ySL-5);
+    const yTP = Y(sig.tp);
+    ctx.setLineDash([6,4]); ctx.strokeStyle='#26a69a';
+    ctx.beginPath(); ctx.moveTo(startX,yTP); ctx.lineTo(endX,yTP); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='#26a69a';
+    ctx.fillText('TP '+sig.tp.toFixed(2), startX+4, yTP-5);
+    const yE = Y(sig.entry);
+    ctx.setLineDash([3,3]); ctx.strokeStyle='rgba(255,209,102,0.8)';
+    ctx.beginPath(); ctx.moveTo(startX,yE); ctx.lineTo(endX,yE); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='#ffd166';
+    ctx.fillText('Entry '+sig.entry.toFixed(2), startX+4, yE-5);
+    ctx.lineWidth=1;
+  }
+  ctx.font='10px sans-serif'; ctx.textAlign='center';
+  ctx.fillStyle='rgba(255,209,102,0.8)';
+  ctx.fillText('پیش‌بینی', sepX + (plotW-hist.length*cw)/2, padT+10);
+}
+
+function drawEquity(trades){
+  const canvas=$('equityChart');
+  const rect=canvas.getBoundingClientRect();
+  const W=Math.max(300, rect.width), H=180;
+  const dpr=window.devicePixelRatio||1;
+  canvas.width=Math.round(W*dpr); canvas.height=Math.round(H*dpr);
+  canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
+  if (!trades.length){
+    ctx.fillStyle='rgba(255,255,255,.4)'; ctx.font='12px sans-serif';
+    ctx.textAlign='center'; ctx.fillText('داده‌ای برای نمایش نیست', W/2, H/2);
+    return;
+  }
+  const eq = [0, ...trades.map(t=>t.equity)];
+  let lo=Math.min(...eq), hi=Math.max(...eq);
+  if (lo === hi){ lo -= 1; hi += 1; }
+  const pad = (hi-lo)*0.1; lo -= pad; hi += pad;
+  const padL=44, padR=14, padT=14, padB=22;
+  const plotW=W-padL-padR, plotH=H-padT-padB;
+  const N = eq.length-1;
+  const X = i => padL + (i/Math.max(1,N))*plotW;
+  const Y = v => padT + (hi-v)/(hi-lo)*plotH;
+  ctx.font='10px monospace'; ctx.textAlign='left'; ctx.textBaseline='middle';
+  for (let g=0;g<=4;g++){
+    const v = lo + (hi-lo)*g/4, y = Y(v);
+    ctx.strokeStyle='rgba(255,255,255,.05)';
+    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.4)';
+    ctx.fillText(v.toFixed(1)+'R', 4, y);
+  }
+  if (lo < 0 && hi > 0){
+    const y0 = Y(0);
+    ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(padL,y0); ctx.lineTo(W-padR,y0); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  const finalEq = eq[N];
+  const colMain = finalEq >= 0 ? '#26a69a' : '#ef5350';
+  ctx.beginPath();
+  ctx.moveTo(X(0), Y(eq[0]));
+  for (let i=1;i<=N;i++) ctx.lineTo(X(i), Y(eq[i]));
+  ctx.strokeStyle = colMain; ctx.lineWidth = 2; ctx.stroke();
+  ctx.lineTo(X(N), Y(lo)); ctx.lineTo(X(0), Y(lo)); ctx.closePath();
+  ctx.fillStyle = finalEq >= 0 ? 'rgba(38,166,154,.10)' : 'rgba(239,83,80,.10)';
+  ctx.fill();
+  ctx.lineWidth = 1;
+  ctx.fillStyle = colMain; ctx.font='bold 12px monospace';
+  ctx.textAlign='right';
+  ctx.fillText(finalEq.toFixed(2)+'R', W-padR-4, Y(finalEq)-10);
+}
+
+/* ===== Main ===== */
+let currentRows=null;
+function fmtDate(d){ if (!d) return '—'; const p=x=>String(x).padStart(2,'0');
+  return `${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; }
+function stepMs(rows, count){
+  count=count||40; const diffs=[];
+  for (let i=Math.max(1,rows.length-count); i<rows.length; i++){
+    if (!rows[i].dt||!rows[i-1].dt) continue;
+    const d=rows[i].dt-rows[i-1].dt; if (d>0) diffs.push(d);
+  }
+  if (!diffs.length) return 3600000;
+  diffs.sort((a,b)=>a-b); return diffs[diffs.length>>1];
+}
+
+async function run(){
+  const btn=$('run'); btn.disabled=true; clearLog();
+  $('optPanel').style.display = 'none';
+
+  try {
+    let text   = $('raw').value.trim();
+    let textMT = $('rawMT').value.trim();
+    let rows   = currentRows;
+    if (text){
+      rows = parseCSV(text);
+      currentRows = rows;
+    } else if (textMT){
+      rows = parseMTFormat(textMT);
+      currentRows = rows;
+    }
+    if (!rows || rows.length<300){
+      log('داده کافی نیست (حداقل ۳۰۰ کندل). فعلی: '+(rows?rows.length:0), 'err');
+      btn.disabled=false; return;
+    }
+
+    const maxCandles = Math.max(300, Math.min(100000,
+      parseInt($('cfgMaxCandles').value) || 3000));
+    const originalLen = rows.length;
+    if (rows.length > maxCandles){
+      log(`✂️ برش داده: از ${rows.length} به ${maxCandles} کندل آخر (برای جلوگیری از OOM مرورگر)`, 'warn');
+      rows = rows.slice(-maxCandles);
+      currentRows = rows;
+    }
+    log(`📊 داده مورد استفاده: <b>${rows.length}</b> کندل (از ${originalLen})`);
+
+    $('dataInfo').textContent = `✔ ${rows.length} کندل — آخرین: ${rows[rows.length-1].t}`;
+
+    /* ★★★ COUNTDOWN ★★★ */
+    const waitEnabled = $('cfgWaitEnabled').value === '1';
+    const waitSec = Math.max(1, Math.min(60, parseInt($('cfgWait').value)||10));
+
+    if (waitEnabled){
+      const tips = [
+        `💡 <b>اطلاعات داده:</b> ${rows.length} کندل بارگذاری شده — از ${rows[0].t} تا ${rows[rows.length-1].t}.`,
+        `📊 <b>آمار:</b> آخرین قیمت: <b>$${rows[rows.length-1].c.toFixed(2)}</b> — آماده تحلیل.`,
+        `🎯 <b>پارامترها:</b> پنجره=${$('cfgWin').value} · Ensemble=${$('cfgEns').value} · Epochs=${$('cfgEpochs').value}.`,
+        `⚙️ <b>یادآوری:</b> تا ${waitSec} ثانیه دیگر آموزش شروع می‌شود.`
+      ];
+      const tipsText = tips[Math.floor(Math.random()*tips.length)];
+      log(`⏱ شمارش معکوس: ${waitSec} ثانیه...`);
+      $('mStatus').textContent = `شمارش معکوس: ${waitSec}...`;
+      const finished = await runCountdown(waitSec, tipsText);
+      log(finished ? '✔ شمارش معکوس تمام شد.' : '⏭ شمارش معکوس رد شد.', finished ? 'ok' : 'warn');
+    }
+
+    const W       = Math.max(8, Math.min(48, parseInt($('cfgWin').value)||24));
+    const epochs  = Math.max(5, Math.min(200, parseInt($('cfgEpochs').value)||15));
+    const H       = Math.max(8, Math.min(96, parseInt($('cfgHidden').value)||40));
+    const ensN    = Math.max(1, Math.min(5, parseInt($('cfgEns').value)||3));
+    const lr      = Math.max(1e-5, Math.min(0.05, parseFloat($('cfgLr').value)||0.004));
+    const batch   = Math.max(8, Math.min(256, parseInt($('cfgBatch').value)||32));
+    const clsW    = Math.max(0, Math.min(10, parseFloat($('cfgClsW').value)||2.0));
+    const confT   = Math.max(0.02, Math.min(0.30, parseFloat($('cfgConfT').value)||0.10));
+    const mode    = $('cfgMode').value;
+    const hidden1 = Math.max(8, Math.floor(H*0.75));
+    const useOptimize = $('cfgOptimize').checked;
+    const minTrades   = Math.max(5, Math.min(100, parseInt($('cfgMinTrades').value)||15));
+    const horizon     = Math.max(5, Math.min(50, parseInt($('cfgHorizon').value)||15));
+    const baseOpts = {
+      slMult:   Math.max(0.5, Math.min(4, parseFloat($('cfgSlMult').value)||1.5)),
+      rrRatio:  Math.max(1, Math.min(5, parseFloat($('cfgRR').value)||2.0)),
+      minConf:  Math.max(0, Math.min(80, parseFloat($('cfgMinConf').value)||20)),
+      capital:  Math.max(100, parseFloat($('cfgCapital').value)||10000),
+      riskPct:  Math.max(0.1, Math.min(5, parseFloat($('cfgRiskPct').value)||1.0)),
+      pipValue: Math.max(0.01, parseFloat($('cfgPipVal').value)||1)
+    };
+
+    log(`تنظیمات: W=${W} | H=${H} | Ep=${epochs} | Ens=${ensN} | بهینه‌سازی=${useOptimize?'✅':'❌'}`);
+
+    $('mStatus').textContent = 'پردازش اندیکاتورها...';
+    await sleep(20);
+
+    let A;
+    try {
+      A = computeArrays(rows);
+    } catch(e){
+      log('خطا در محاسبه اندیکاتورها: '+e.message, 'err');
+      throw e;
+    }
+
+    $('mStatus').textContent = 'ساخت دیتاست...';
+    await sleep(20);
+
+    let ds;
+    try {
+      ds = buildDataset(A, W, mode);
+    } catch(e){
+      log('خطا در ساخت دیتاست: '+e.message, 'err');
+      throw e;
+    }
+
+    const nS = ds.Xs.length;
+    if (nS < 200){ log('نمونه کافی نیست: '+nS+' (حداقل ۲۰۰)', 'err'); btn.disabled=false; return; }
+    log(`نمونه‌ها: <b>${nS}</b> | ویژگی هر کندل: 11 + 12 global`);
+
+    const nTr = Math.floor(nS*0.85);
+    const stats = fitStats(ds.Xs, 0, nTr);
+    const yStats = fitStatsY(ds.Yreg, 0, nTr);
+
+    $('mStatus').textContent = 'نرمال‌سازی داده‌ها...';
+    await sleep(20);
+
+    const Xtr=[], Ytr=[], Ctr=[], Xva=[], Yva=[], Cva=[], idxVa=[];
+    for (let i=0;i<nS;i++){
+      const f=ds.Xs[i];
+      const seq=[];
+      for (let t=0;t<f.seq.length;t++){
+        const v=new Float32Array(f.seq[t].length);
+        for (let d=0;d<v.length;d++) v[d]=(f.seq[t][d]-stats.meanS[d])/stats.stdS[d];
+        seq.push(v);
+      }
+      const g=new Float32Array(f.global.length);
+      for (let d=0;d<g.length;d++) g[d]=(f.global[d]-stats.meanG[d])/stats.stdG[d];
+      const y=new Float32Array(ds.Yreg[i].length);
+      for (let d=0;d<y.length;d++) y[d]=(ds.Yreg[i][d]-yStats.mean[d])/yStats.std[d];
+      if (i<nTr){ Xtr.push({seq,global:g}); Ytr.push(y); Ctr.push(ds.Ycls[i]); }
+      else { Xva.push({seq,global:g}); Yva.push(y); Cva.push(ds.Ycls[i]); idxVa.push(ds.idxs[i]); }
+    }
+    log(`آموزش: ${Xtr.length} | اعتبارسنجی: ${Xva.length}`);
+    $('mVal').textContent = Xva.length;
+
+    ds.Xs = null; ds.Yreg = null; ds.Ycls = null; ds.idxs = null;
+
+    const models=[]; const totalEp=ensN*epochs; let doneEp=0;
+    const trainStart = performance.now();
+
+    for (let m=0;m<ensN;m++){
+      log(`<b>═══ مدل ${m+1}/${ensN} ═══</b>`);
+      $('mStatus').textContent = `آموزش ${m+1}/${ensN}...`;
+      const cfg = { H, hidden1, lr, epochs, batch, clsW };
+      const t0 = performance.now();
+      const { model, bestEp, bestScore } = await trainModel(
+        cfg, Xtr, Ytr, Ctr, Xva, Yva, Cva,
+        (ep, acc, best, lrNow) => {
+          doneEp++;
+          $('barFill').style.width = (doneEp/totalEp*100).toFixed(1)+'%';
+          if (ep % 5 === 0 || ep === epochs){
+            log(`  m${m+1} ep ${ep}/${epochs} | dir-acc=${(acc*100).toFixed(1)}% | best=${(best*100).toFixed(1)}%`);
+          }
+        }
+      );
+      models.push(model);
+      const sec = ((performance.now()-t0)/1000).toFixed(1);
+      log(`<span class="ok">✔ m${m+1}: best=${(bestScore*100).toFixed(1)}% (دوره ${bestEp}, ${sec}s)</span>`);
+      await sleep(10);
+    }
+
+    const totalTrainSec = ((performance.now()-trainStart)/1000).toFixed(1);
+    log(`⏱ کل زمان آموزش: <b>${totalTrainSec}s</b>`);
+
+    $('mStatus').textContent = 'ارزیابی...';
+    await sleep(20);
+
+    const outDim=Yva[0].length;
+    const closeIdx = k => mode==='ohlc' ? (k*4+3) : k;
+    const mae=new Float64Array(5), mape=new Float64Array(5), regDirAcc=new Float64Array(5);
+    const clsCorrect=[], clsConf=[];
+    const allPred=[], allActual=[];
+    const nV = Xva.length;
+    for (let s=0;s<nV;s++){
+      const regs=[], clss=[];
+      for (const m of models){
+        const o = m.forward(Xva[s].seq, Xva[s].global, false);
+        regs.push(o.reg); clss.push(o.cls[0]);
+      }
+      const avgReg=new Float32Array(outDim);
+      for (const p of regs) for (let i=0;i<outDim;i++) avgReg[i]+=p[i];
+      for (let i=0;i<outDim;i++) avgReg[i]/=regs.length;
+      let avgCls=0; for (const p of clss) avgCls+=p; avgCls/=clss.length;
+      const base = A.c[idxVa[s]];
+      const clsPred = avgCls > 0.5 ? 1 : 0;
+      clsCorrect.push(clsPred === Cva[s] ? 1 : 0);
+      clsConf.push(Math.abs(avgCls - 0.5));
+      for (let k=0;k<5;k++){
+        const ci=closeIdx(k);
+        const yhat = avgReg[ci]*yStats.std[ci] + yStats.mean[ci];
+        const pred = base*(1+yhat/100);
+        const real = A.c[idxVa[s]+k+1];
+        mae[k]+=Math.abs(pred-real);
+        mape[k]+=Math.abs(pred-real)/Math.abs(real);
+        if (k===0 && Math.sign(pred-base)===Math.sign(real-base)) regDirAcc[k]++;
+        allPred.push(pred); allActual.push(real);
+      }
+    }
+    for (let k=0;k<5;k++){ mae[k]/=nV; mape[k]/=nV; regDirAcc[k]=(regDirAcc[k]/nV)*100; }
+    const clsAcc = clsCorrect.reduce((a,b)=>a+b,0)/nV*100;
+    const idxSorted = [...Array(nV).keys()].sort((a,b)=>clsConf[b]-clsConf[a]);
+    const hiIdx = [];
+    for (let i=0;i<nV;i++) if (clsConf[idxSorted[i]] >= confT) hiIdx.push(idxSorted[i]);
+    const useTopPct = hiIdx.length < nV*0.05;
+    const topN = Math.max(20, Math.floor(nV*0.30));
+    const hiSubset = useTopPct ? idxSorted.slice(0, topN) : hiIdx;
+    let hiCorrect=0; for (const i of hiSubset) hiCorrect += clsCorrect[i];
+    const hiAcc = hiSubset.length>0 ? (hiCorrect/hiSubset.length*100) : 0;
+    const hiCov = hiSubset.length/nV*100;
+    let sumA=0; for (const a of allActual) sumA+=a;
+    const meanA=sumA/allActual.length;
+    let ssRes=0, ssTot=0;
+    for (let i=0;i<allPred.length;i++){
+      const e=allPred[i]-allActual[i]; ssRes+=e*e;
+      const d=allActual[i]-meanA; ssTot+=d*d;
+    }
+    const r2 = ssTot>0 ? 1-ssRes/ssTot : 0;
+    $('mHiAcc').textContent = hiAcc.toFixed(1)+'%';
+    $('mHiCov').textContent = `روی ${hiSubset.length} نمونه (${hiCov.toFixed(0)}%)`;
+    $('mDir1').textContent = clsAcc.toFixed(1);
+    $('mR2').textContent = r2.toFixed(3);
+    $('mMae1v').textContent = '$'+mae[0].toFixed(2);
+    $('mCls1').textContent = clsAcc.toFixed(1)+'%';
+    $('mClsHC').textContent = hiAcc.toFixed(1)+'%';
+    $('mRegDir').textContent = regDirAcc[0].toFixed(1)+'%';
+    $('mMae1').textContent = '$'+mae[0].toFixed(2);
+    $('mMae5').textContent = '$'+mae[4].toFixed(2);
+    $('mMape1').textContent = (mape[0]*100).toFixed(2)+'%';
+    log(`<b>─── نتایج مدل ───</b> cls-acc=${clsAcc.toFixed(1)}% | hi-conf=${hiAcc.toFixed(1)}% | R²=${r2.toFixed(3)}`);
+
+    let sigOpts = { ...baseOpts, optimized: false };
+    let bestBT = null;
+
+    if (useOptimize){
+      $('mStatus').textContent = 'بهینه‌سازی TP/SL...';
+      log(`<b>─── بهینه‌سازی Grid Search ───</b>`);
+      await sleep(20);
+      const preds = predictAll(models, Xva, idxVa, A);
+      log(`نمونه‌های Backtest: ${preds.length}`);
+      const btCfg = { minTrades, horizon };
+      const { best, allResults } = await optimizeSLTP(preds, A, btCfg, (done, total, bestSoFar)=>{
+        $('barFill').style.width = (done/total*100).toFixed(1)+'%';
+        $('mStatus').textContent = `بهینه‌سازی: ${done}/${total}`;
+      });
+      if (best){
+        log(`<b>✔ بهترین:</b> SL=${best.slMult}×ATR | R:R=${best.rr}:1 | MinConf=${best.minConf}%`);
+        log(`  Net R = ${best.result.netR.toFixed(2)} | WR = ${best.result.wr.toFixed(1)}% | PF = ${best.result.pf.toFixed(2)} | ${best.result.n} trades`);
+        sigOpts.slMult = best.slMult;
+        sigOpts.rrRatio = best.rr;
+        sigOpts.minConf = best.minConf;
+        sigOpts.optimized = true;
+        bestBT = best.result;
+        $('optPanel').style.display = 'block';
+        $('optSL').textContent = best.slMult + '×';
+        $('optRR').textContent = best.rr + ':1';
+        $('optConf').textContent = best.minConf + '%';
+        $('btNetR').textContent = best.result.netR.toFixed(2) + 'R';
+        $('btNetR').className = 'v ' + (best.result.netR >= 0 ? 'up' : 'dn');
+        $('btWR').textContent = best.result.wr.toFixed(1) + '%';
+        $('btPF').textContent = best.result.pf.toFixed(2);
+        $('btDD').textContent = '-' + best.result.maxDD.toFixed(2);
+        $('btN').textContent = best.result.n;
+        $('btExp').textContent = best.result.expectancy.toFixed(3);
+        const avgRiskUSD = sigOpts.capital * (sigOpts.riskPct/100);
+        $('btUSD').textContent = '$' + (best.result.netR * avgRiskUSD).toFixed(2);
+        const tbody2 = $('topCombos');
+        tbody2.innerHTML = '';
+        const uniq = [];
+        const seen = new Set();
+        for (const r of allResults){
+          const key = `${r.sl}_${r.rr}_${r.conf}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          uniq.push(r);
+          if (uniq.length >= 5) break;
+        }
+        uniq.forEach((r, idx)=>{
+          const tr = document.createElement('tr');
+          if (idx === 0) tr.className = 'best';
+          const cls = r.netR >= 0 ? 'pos' : 'neg';
+          tr.innerHTML =
+            `<td><b>${idx+1}</b></td><td>${r.sl}×</td><td>${r.rr}:1</td><td>${r.conf}%</td>`+
+            `<td class="${cls}"><b>${r.netR.toFixed(2)}R</b></td><td>${r.n}</td>`+
+            `<td>${r.wr.toFixed(1)}%</td><td>${r.pf.toFixed(2)}</td>`;
+          tbody2.appendChild(tr);
+        });
+        drawEquity(best.result.trades);
+      } else {
+        log(`<span class="warn">⚠ هیچ ترکیبی حداقل ${minTrades} معامله نداشت.</span>`);
+      }
+    } else {
+      log(`بهینه‌سازی خاموش — SL=${baseOpts.slMult}×ATR, R:R=${baseOpts.rrRatio}`);
+    }
+
+    $('mStatus').textContent = 'تولید سیگنال...';
+    await sleep(20);
+    const lastIdx = A.n-1;
+    const fc = forecast(models, A, W, stats, yStats, mode, lastIdx);
+    const candles = buildPredictedCandles(fc.avg, fc.std, A, lastIdx, mode);
+    const sig = generateSignal(fc, A, lastIdx, sigOpts);
+    renderSignal(sig);
+    log(`<b>─── سیگنال ───</b>`);
+    log(`Action: <b style="color:${sig.action==='BUY'?'#26a69a':sig.action==='SELL'?'#ef5350':'#ffd166'}">${sig.action}</b> | Conf: ${sig.conf.toFixed(1)}% | Entry: ${sig.entry.toFixed(2)}`);
+    if (sig.sl !== null) log(`SL: ${sig.sl.toFixed(2)} | TP: ${sig.tp.toFixed(2)} | R:R = ${sig.rr.toFixed(2)}${sig.optimized?' <span class="ok">(بهینه‌شده)</span>':''}`);
+
+    const step = stepMs(rows, 40);
+    const lastDate = rows[rows.length-1].dt || new Date();
+    const times=[]; for (let k=1;k<=5;k++) times.push(new Date(lastDate.getTime()+step*k));
+
+    const tbody=$('tbody'); tbody.innerHTML='';
+    let prev=A.c[lastIdx];
+    for (let k=0;k<5;k++){
+      const cd=candles[k];
+      const chg=(cd.c-prev)/prev*100;
+      const cls=chg>=0?'up':'dn';
+      const pUp = k===0 ? fc.prob : (fc.avg[k] >= 0 ? Math.min(0.95, 0.5 + Math.abs(fc.avg[k])*0.3) : Math.max(0.05, 0.5 - Math.abs(fc.avg[k])*0.3));
+      const pColor = pUp>0.5?'#26a69a':'#ef5350';
+      const tr=document.createElement('tr');
+      tr.innerHTML =
+        `<td>${k+1}</td><td>${fmtDate(times[k])}</td>`+
+        `<td>${cd.o.toFixed(2)}</td><td>${cd.h.toFixed(2)}</td><td>${cd.l.toFixed(2)}</td>`+
+        `<td style="color:${chg>=0?'#26a69a':'#ef5350'};font-weight:700">${cd.c.toFixed(2)}</td>`+
+        `<td><span class="tag ${cls}">${chg>=0?'+':''}${chg.toFixed(2)}%</span></td>`+
+        `<td style="color:${pColor};font-weight:700">${(pUp*100).toFixed(1)}%</td>`+
+        `<td style="color:#a78bfa">±${cd.std.toFixed(2)}</td>`;
+      tbody.appendChild(tr);
+      prev=cd.c;
+    }
+
+    const histForChart=[];
+    const start=Math.max(0, A.n-120);
+    for (let i=start;i<A.n;i++) histForChart.push({o:A.o[i],h:A.h[i],l:A.l[i],c:A.c[i]});
+    drawChart(histForChart, candles, sig);
+
+    let summaryHTML;
+    if (sig.action === 'WAIT'){
+      summaryHTML = `<b>توصیه:</b> اطمینان ${sig.conf.toFixed(1)}٪ (کمتر از آستانه ${sigOpts.minConf}٪) — سیگنالی صادر نمی‌شود. `+
+        `دقت جهت: <b>${clsAcc.toFixed(1)}%</b> | High-Conf: <b style="color:#a78bfa">${hiAcc.toFixed(1)}%</b>.`;
+    } else {
+      const optInfo = sig.optimized ? ` <span class="opt-tag">بهینه از Backtest</span>` : '';
+      summaryHTML = `<b>سیگنال ${sig.action==='BUY'?'خرید 🟢':'فروش 🔴'}${optInfo}:</b> `+
+        `ورود <b style="color:#ffd166">$${sig.entry.toFixed(2)}</b> · `+
+        `SL <b style="color:#ef5350">$${sig.sl.toFixed(2)}</b> · `+
+        `TP <b style="color:#26a69a">$${sig.tp.toFixed(2)}</b> · `+
+        `R:R <b>${sig.rr.toFixed(2)}:1</b> · حجم: <b>${sig.size.toFixed(2)} لات</b>.`;
+      if (bestBT){
+        summaryHTML += ` <br><b>Backtest:</b> Net R = <b style="color:${bestBT.netR>=0?'#26a69a':'#ef5350'}">${bestBT.netR.toFixed(2)}R</b> `+
+          `روی ${bestBT.n} معامله · WR = <b>${bestBT.wr.toFixed(1)}%</b> · PF = <b>${bestBT.pf.toFixed(2)}</b>.`;
+      }
+    }
+    $('summaryBox').innerHTML = summaryHTML;
+    $('mStatus').textContent = 'آماده ✓';
+    log('<span class="ok"><b>✔ آموزش + بهینه‌سازی + سیگنال کامل شد.</b></span>');
+
+  } catch(e){
+    console.error(e);
+    log('❌ خطا: ' + (e.message || e), 'err');
+    if (e.stack) log('  ' + e.stack.split('\n')[1], 'err');
+    $('mStatus').textContent = 'خطا';
+  }
+  btn.disabled=false;
+}
+
+/* ===== Events ===== */
+const drop=$('drop'), fileInput=$('file');
+drop.addEventListener('click', ()=>fileInput.click());
+drop.addEventListener('dragover', e=>{e.preventDefault();drop.classList.add('hover');});
+drop.addEventListener('dragleave', ()=>drop.classList.remove('hover'));
+drop.addEventListener('drop', e=>{ e.preventDefault(); drop.classList.remove('hover');
+  const f=e.dataTransfer.files[0]; if (f) readFile(f); });
+fileInput.addEventListener('change', e=>{ const f=e.target.files[0]; if (f) readFile(f); });
+function readFile(f){
+  const r=new FileReader();
+  r.onload = ev => {
+    $('raw').value = ev.target.result; currentRows = null;
+    const rows = parseCSV(ev.target.result);
+    $('dataInfo').textContent = `فایل «${f.name}» — ${rows.length} کندل`;
+    log(`فایل «${f.name}» بارگذاری شد (${rows.length} کندل).`);
+  };
+  r.readAsText(f);
+}
+$('useText').addEventListener('click', ()=>{
+  const rows=parseCSV($('raw').value);
+  currentRows = rows.length ? rows : null;
+  $('dataInfo').textContent = `${rows.length} کندل پردازش شد`;
+  log(`متن پردازش شد — ${rows.length} کندل.`);
+});
+
+/* ===== MT5 panel events ===== */
+const dropMT = $('dropMT'), fileMT = $('fileMT');
+dropMT.addEventListener('click', () => fileMT.click());
+dropMT.addEventListener('dragover', e => { e.preventDefault(); dropMT.classList.add('hover'); });
+dropMT.addEventListener('dragleave', () => dropMT.classList.remove('hover'));
+dropMT.addEventListener('drop', e => {
+  e.preventDefault(); dropMT.classList.remove('hover');
+  const f = e.dataTransfer.files[0]; if (f) readFileMT(f);
+});
+fileMT.addEventListener('change', e => {
+  const f = e.target.files[0]; if (f) readFileMT(f);
+});
+
+function readFileMT(f){
+  const r = new FileReader();
+  r.onload = ev => {
+    $('rawMT').value = ev.target.result;
+    currentRows = null;
+    const rows = parseMTFormat(ev.target.result);
+    $('dataInfoMT').textContent = `فایل «${f.name}» — ${rows.length} کندل (MT5)`;
+    log(`📄 فایل MT5 «${f.name}» بارگذاری شد (${rows.length} کندل).`);
+  };
+  r.readAsText(f);
+}
+
+$('useTextMT').addEventListener('click', () => {
+  const rows = parseMTFormat($('rawMT').value);
+  currentRows = rows.length ? rows : null;
+  $('dataInfoMT').textContent = `${rows.length} کندل MT5 پردازش شد`;
+  log(`📄 متن MT5 پردازش شد — ${rows.length} کندل.`);
+});
+
+$('run').addEventListener('click', run);
+drawChart([], [], null);
+drawEquity([]);
+</script>
+</body>
+</html>
